@@ -61,7 +61,7 @@ router.push('/pick')
       {/* Hero */}
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <div style={{ fontSize: '3.5rem', marginBottom: '0.75rem' }}>⛳</div>
-        <h1 style={{ fontSize: '2.4rem', color: 'var(--green)', marginBottom: '0.4rem' }}>CC Masters Pool</h1>
+        <h1 style={{ fontSize: '2.4rem', color: 'var(--green)', marginBottom: '0.4rem' }}>KO Masters Pool</h1>
         <p style={{ color: 'var(--gold)', fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '1.05rem', marginBottom: '1.25rem' }}>
           Augusta National · April 2026
         </p>
