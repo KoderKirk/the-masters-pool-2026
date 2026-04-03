@@ -24,6 +24,7 @@ export default function HomePage() {
 
   // Join/login form state
   const [mode, setMode] = useState<'join' | 'login'>('join')
+  const [poolLocked, setPoolLocked] = useState(false)
   const [poolPass, setPoolPass] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -50,6 +51,8 @@ export default function HomePage() {
         if (count) setTotalEntries(count)
       } else {
         setAuthed(false)
+        const { data: locked } = await supabase.from('entries').select('id').eq('is_locked', true).limit(1)
+        if (locked && locked.length > 0) { setPoolLocked(true); setMode('login') }
       }
     }
     init()
@@ -262,21 +265,28 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Tab toggle */}
-      <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 6, overflow: 'hidden', marginBottom: '1.5rem' }}>
-        {(['join', 'login'] as const).map(m => (
-          <button key={m} onClick={() => { setMode(m); setError('') }} style={{
-            flex: 1, padding: '0.7rem',
-            background: mode === m ? 'var(--green)' : 'var(--white)',
-            color: mode === m ? '#fff' : 'var(--gray)',
-            border: 'none', cursor: 'pointer',
-            fontSize: '0.92rem', fontWeight: mode === m ? 600 : 400,
-            transition: 'all 0.15s',
-          }}>
-            {m === 'join' ? '🎟️  Join Pool' : '🔑  Sign In'}
-          </button>
-        ))}
-      </div>
+      {/* Tab toggle — hide Join if pool is locked */}
+      {!poolLocked && (
+        <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 6, overflow: 'hidden', marginBottom: '1.5rem' }}>
+          {(['join', 'login'] as const).map(m => (
+            <button key={m} onClick={() => { setMode(m); setError('') }} style={{
+              flex: 1, padding: '0.7rem',
+              background: mode === m ? 'var(--green)' : 'var(--white)',
+              color: mode === m ? '#fff' : 'var(--gray)',
+              border: 'none', cursor: 'pointer',
+              fontSize: '0.92rem', fontWeight: mode === m ? 600 : 400,
+              transition: 'all 0.15s',
+            }}>
+              {m === 'join' ? '🎟️  Join Pool' : '🔑  Sign In'}
+            </button>
+          ))}
+        </div>
+      )}
+      {poolLocked && (
+        <div style={{ marginBottom: '1.5rem', padding: '0.65rem 1rem', background: 'var(--cream-dark)', border: '1px solid var(--border)', borderRadius: 6, textAlign: 'center', color: 'var(--gray)', fontSize: '0.88rem' }}>
+          🔒 The pool is locked — sign in to view the leaderboard.
+        </div>
+      )}
 
       {/* Form */}
       <div className="card">

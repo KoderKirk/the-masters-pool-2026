@@ -105,18 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 MASTERS POOL 2026
               </span>
             </a>
-            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-              {[
-                { href: '/leaderboard', label: 'Leaderboard' },
-                { href: '/pick',        label: 'My Picks' },
-                { href: '/admin',       label: 'Admin' },
-              ].map(l => (
-                <a key={l.href} href={l.href} style={{ color: '#fff', fontSize: '0.88rem', fontWeight: 400, opacity: 0.85 }}>
-                  {l.label}
-                </a>
-              ))}
-              <NavAuth />
-            </div>
+            <NavAuth />
           </div>
         </nav>
         <main>{children}</main>
