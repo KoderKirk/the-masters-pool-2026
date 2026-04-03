@@ -6,6 +6,10 @@ import { useRouter } from 'next/navigation'
 const MAX_PTS = 50
 
 type Golfer = { id: string; name: string; points: number; current_score: number }
+type SavedEntry = {
+  id: string; entry_number: number; entry_name: string; total_points_used: number; is_locked: boolean
+  golfer_1_id: string; golfer_2_id: string; golfer_3_id: string; golfer_4_id: string
+}
 
 export default function PickPage() {
   const router = useRouter()
@@ -20,6 +24,9 @@ export default function PickPage() {
   const [success, setSuccess] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [poolLocked, setPoolLocked] = useState(false)
+  const [savedEntries, setSavedEntries] = useState<SavedEntry[]>([])
+  const [displayName, setDisplayName] = useState('')
+  const [editingNum, setEditingNum] = useState<number | null>(null)
 
   useEffect(() => {
     async function init() {
@@ -29,34 +36,43 @@ export default function PickPage() {
 
       let { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
       if (!profile) {
-        // Profile missing (e.g. signup interrupted) — create it now
-        const displayName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Player'
-        await supabase.from('profiles').upsert({ id: user.id, display_name: displayName, is_admin: false, payment_status: 'pending' }, { onConflict: 'id' })
-        profile = { display_name: displayName }
+        const dn = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Player'
+        await supabase.from('profiles').upsert({ id: user.id, display_name: dn, is_admin: false, payment_status: 'pending' }, { onConflict: 'id' })
+        profile = { display_name: dn }
       }
+      setDisplayName(profile.display_name)
       setEntryName(`${profile.display_name} #1`)
 
-      const [{ data: golferData }, { data: anyLocked }] = await Promise.all([
+      const [{ data: golferData }, { data: anyLocked }, { data: existingEntries }] = await Promise.all([
         supabase.from('golfers').select('id,name,points,current_score').order('points', { ascending: false }),
         supabase.from('entries').select('id').eq('is_locked', true).limit(1),
+        supabase.from('entries').select('*').eq('user_id', user.id).order('entry_number'),
       ])
       if (golferData) setGolfers(golferData)
       if (anyLocked && anyLocked.length > 0) setPoolLocked(true)
+      if (existingEntries) setSavedEntries(existingEntries)
       setLoading(false)
     }
     init()
   }, [router])
+
+  function loadEntryForEdit(entry: SavedEntry) {
+    const find = (id: string) => golfers.find(g => g.id === id) ?? null
+    const picks = [find(entry.golfer_1_id), find(entry.golfer_2_id), find(entry.golfer_3_id), find(entry.golfer_4_id)].filter(Boolean) as Golfer[]
+    setSelected(picks)
+    setEntryName(entry.entry_name)
+    setEntryNum(entry.entry_number)
+    setEditingNum(entry.entry_number)
+    setError(''); setSuccess('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const totalPts = selected.reduce((s, g) => s + g.points, 0)
   const pct = Math.min((totalPts / MAX_PTS) * 100, 100)
   const overBudget = totalPts > MAX_PTS
 
   function toggle(g: Golfer) {
-    if (selected.find(s => s.id === g.id)) {
-      setSelected(selected.filter(s => s.id !== g.id))
-      setError('')
-      return
-    }
+    if (selected.find(s => s.id === g.id)) { setSelected(selected.filter(s => s.id !== g.id)); setError(''); return }
     if (selected.length >= 4) { setError('You can only pick 4 golfers.'); return }
     if (totalPts + g.points > MAX_PTS) { setError(`${g.name} would push you over 50 points.`); return }
     setError('')
@@ -81,7 +97,19 @@ export default function PickPage() {
     }, { onConflict: 'user_id,entry_number' })
     setSaving(false)
     if (err) { setError(err.message); return }
+
+    // Refresh saved entries
+    const { data: updated } = await supabase.from('entries').select('*').eq('user_id', userId!).order('entry_number')
+    if (updated) setSavedEntries(updated)
+
     setSuccess('Entry saved! 🎉  Remember to pay $20 via Venmo @KirkOliver')
+    setEditingNum(null)
+    // Reset form to next available entry
+    const taken = (updated ?? []).map(e => e.entry_number)
+    const next = [1, 2, 3].find(n => !taken.includes(n)) ?? 1
+    setEntryNum(next)
+    setEntryName(`${displayName} #${next}`)
+    setSelected([])
   }
 
   const filtered = golfers.filter(g => g.name.toLowerCase().includes(search.toLowerCase()))
@@ -105,9 +133,57 @@ export default function PickPage() {
   return (
     <div className="page fade-in" style={{ paddingTop: '2rem' }}>
       <h1 style={{ color: 'var(--green)', marginBottom: '0.25rem' }}>Build Your Foursome</h1>
-      <p style={{ color: 'var(--gray)', marginBottom: '1.75rem', fontSize: '0.92rem' }}>
+      <p style={{ color: 'var(--gray)', marginBottom: savedEntries.length > 0 ? '1.25rem' : '1.75rem', fontSize: '0.92rem' }}>
         Select 4 golfers · Total ≤ 50 points · Deadline Thursday 5am PT
       </p>
+
+      {/* Submitted entries */}
+      {savedEntries.length > 0 && (
+        <div style={{ marginBottom: '1.75rem' }}>
+          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>
+            Your Entries
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {savedEntries.map(entry => {
+              const picks = [entry.golfer_1_id, entry.golfer_2_id, entry.golfer_3_id, entry.golfer_4_id]
+                .map(id => golfers.find(g => g.id === id))
+                .filter(Boolean) as Golfer[]
+              const isEditing = editingNum === entry.entry_number
+              return (
+                <div key={entry.id} style={{
+                  background: isEditing ? '#edf7f2' : 'var(--white)',
+                  border: `2px solid ${isEditing ? 'var(--green)' : 'var(--border)'}`,
+                  borderRadius: 8, padding: '0.85rem 1rem',
+                  display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
+                }}>
+                  <div style={{ fontWeight: 700, color: 'var(--green)', fontSize: '0.9rem', minWidth: 100 }}>
+                    {entry.entry_name}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flex: 1, flexWrap: 'wrap' }}>
+                    {picks.map(g => (
+                      <div key={g.id} style={{
+                        background: 'var(--cream)', border: '1px solid var(--border)',
+                        borderRadius: 5, padding: '0.3rem 0.65rem', fontSize: '0.82rem',
+                        display: 'flex', gap: '0.4rem', alignItems: 'center',
+                      }}>
+                        <span>{g.name}</span>
+                        <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{g.points}pt</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--gray)' }}>{entry.total_points_used}pt used</span>
+                    {isEditing
+                      ? <span style={{ fontSize: '0.8rem', color: 'var(--green)', fontWeight: 600 }}>Editing…</span>
+                      : <button onClick={() => loadEntryForEdit(entry)} className="btn btn-ghost" style={{ padding: '0.25rem 0.8rem', fontSize: '0.8rem' }}>Edit</button>
+                    }
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
 
@@ -169,7 +245,9 @@ export default function PickPage() {
 
         {/* Team sidebar */}
         <div className="card" style={{ position: 'sticky', top: '1rem', border: `2px solid ${overBudget ? 'var(--red)' : 'var(--green)'}` }}>
-          <h2 style={{ fontSize: '1.15rem', color: 'var(--green)', marginBottom: '1rem' }}>Your Team</h2>
+          <h2 style={{ fontSize: '1.15rem', color: 'var(--green)', marginBottom: '1rem' }}>
+            {editingNum !== null ? `Editing Entry #${editingNum}` : 'New Entry'}
+          </h2>
 
           {/* Budget bar */}
           <div style={{ marginBottom: '1.25rem' }}>
@@ -213,7 +291,15 @@ export default function PickPage() {
             </div>
             <div>
               <label style={labelSm}>Entry #</label>
-              <select className="input" value={entryNum} onChange={e => { setEntryNum(+e.target.value); setEntryName(entryName.replace(/#\d/, `#${e.target.value}`)) }} style={{ fontSize: '0.88rem' }}>
+              <select className="input" value={entryNum} onChange={e => {
+                const n = +e.target.value
+                setEntryNum(n)
+                setEntryName(entryName.replace(/#\d/, `#${n}`))
+                // Load existing entry if it exists
+                const existing = savedEntries.find(en => en.entry_number === n)
+                if (existing) loadEntryForEdit(existing)
+                else { setSelected([]); setEditingNum(null) }
+              }} style={{ fontSize: '0.88rem' }}>
                 <option value={1}>Entry #1</option>
                 <option value={2}>Entry #2 (+$20)</option>
                 <option value={3}>Entry #3 (+$20)</option>
@@ -230,7 +316,7 @@ export default function PickPage() {
             disabled={saving || selected.length !== 4 || overBudget || poolLocked}
             style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
           >
-            {saving ? 'Saving…' : '⛳  Submit Entry'}
+            {saving ? 'Saving…' : editingNum !== null ? '⛳  Update Entry' : '⛳  Submit Entry'}
           </button>
 
           <p style={{ fontSize: '0.78rem', color: 'var(--gray)', textAlign: 'center', marginTop: '0.6rem' }}>
