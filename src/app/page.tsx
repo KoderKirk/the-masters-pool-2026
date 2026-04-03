@@ -104,7 +104,7 @@ export default function HomePage() {
     const second = Math.round(purse * 0.20)
     const third = Math.round(purse * 0.10)
 
-    function leaderLabel(place: number) {
+    const leaderLabel = (place: number) => {
       const entries = leaderboard.filter(r => r.place === place && !r.is_disqualified)
       if (entries.length === 0) return '—'
       if (entries.length === 1) return entries[0].entry_name
