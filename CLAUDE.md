@@ -61,3 +61,4 @@ The leaderboard scoring rule: team score = sum of all 4 golfer scores minus the 
 - Need ≥ 3 golfers to make the cut or entry is DQ'd
 - Entries lock Thursday 5am PT (enforced via admin "Lock All" button, not automatically)
 - Admin scores are entered manually in the Scores tab (integer vs par, e.g. -5 for 5-under)
+test
