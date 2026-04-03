@@ -95,6 +95,20 @@ CREATE POLICY "entries_delete"  ON entries  FOR DELETE USING (auth.uid() = user_
 CREATE POLICY "golfers_read"    ON golfers  FOR SELECT USING (true);
 
 -- =============================================
+-- POOL SETTINGS (admin toggles)
+-- =============================================
+CREATE TABLE IF NOT EXISTS pool_settings (
+  key TEXT PRIMARY KEY,
+  value BOOLEAN NOT NULL DEFAULT FALSE
+);
+INSERT INTO pool_settings (key, value) VALUES ('show_leader', false) ON CONFLICT (key) DO NOTHING;
+
+ALTER TABLE pool_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "settings_read"         ON pool_settings FOR SELECT USING (true);
+CREATE POLICY "settings_admin_update" ON pool_settings FOR UPDATE
+  USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.is_admin = true));
+
+-- =============================================
 -- AUTO-CREATE PROFILE ON SIGNUP
 -- =============================================
 CREATE OR REPLACE FUNCTION handle_new_user()

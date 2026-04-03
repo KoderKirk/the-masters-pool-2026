@@ -234,7 +234,7 @@ export default function PickPage() {
           </button>
 
           <p style={{ fontSize: '0.78rem', color: 'var(--gray)', textAlign: 'center', marginTop: '0.6rem' }}>
-            Pay $20/entry · Venmo @KirkOliver
+            Pay $20/entry · Venmo @KirkOliver · PayPal kirko005@gmail.com
           </p>
           <a href="/leaderboard" style={{ display: 'block', textAlign: 'center', fontSize: '0.85rem', marginTop: '0.4rem' }}>
             View Leaderboard →

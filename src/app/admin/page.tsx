@@ -18,6 +18,7 @@ export default function AdminPage() {
   const [cut, setCut] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [showLeader, setShowLeader] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -26,13 +27,15 @@ export default function AdminPage() {
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       if (!p?.is_admin) { router.push('/'); return }
       setOk(true)
-      const [{ data: ps }, { data: es }, { data: gs }] = await Promise.all([
+      const [{ data: ps }, { data: es }, { data: gs }, { data: sl }] = await Promise.all([
         supabase.from('profiles').select('*').order('display_name'),
         supabase.from('entries').select('*').order('created_at'),
         supabase.from('golfers').select('*').order('points', { ascending: false }),
+        supabase.from('pool_settings').select('value').eq('key', 'show_leader').single(),
       ])
       if (ps) setProfiles(ps)
       if (es) setEntries(es)
+      if (sl) setShowLeader(!!sl.value)
       if (gs) {
         setGolfers(gs)
         const s: Record<string, string> = {}
@@ -66,6 +69,13 @@ export default function AdminPage() {
     await supabase.from('entries').update({ is_locked: true }).neq('id', '00000000-0000-0000-0000-000000000000')
     setEntries(prev => prev.map(e => ({ ...e, is_locked: true })))
     setMsg('All entries locked.')
+  }
+
+  async function toggleShowLeader() {
+    const next = !showLeader
+    await supabase.from('pool_settings').update({ value: next }).eq('key', 'show_leader')
+    setShowLeader(next)
+    setMsg(next ? 'Leaderboard names now visible on dashboard.' : 'Leaderboard names hidden.')
   }
 
   async function unlockAll() {
@@ -131,6 +141,9 @@ export default function AdminPage() {
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
           <button className="btn btn-ghost" onClick={exportUsers} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
             📥 Export Users
+          </button>
+          <button className="btn btn-ghost" onClick={toggleShowLeader} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem', background: showLeader ? '#e6f2ed' : undefined }}>
+            {showLeader ? '👁 Leaders: ON' : '👁 Leaders: OFF'}
           </button>
           <button className="btn btn-ghost" onClick={unlockAll} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
             🔓 Unlock All

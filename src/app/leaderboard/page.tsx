@@ -16,18 +16,30 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true)
   const [updated, setUpdated] = useState<Date | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [poolLocked, setPoolLocked] = useState(false)
 
-  async function fetch() {
-    const { data } = await supabase.from('entry_leaderboard').select('*').order('place')
-    if (data) { setRows(data); setUpdated(new Date()) }
+  async function loadData() {
+    const [{ data }, { data: locked }] = await Promise.all([
+      supabase.from('entry_leaderboard').select('*').order('place'),
+      supabase.from('entries').select('id').eq('is_locked', true).limit(1),
+    ])
+    const isLocked = !!(locked && locked.length > 0)
+    setPoolLocked(isLocked)
+    if (data) {
+      const sorted = isLocked
+        ? data
+        : [...data].sort((a, b) => a.entry_name.localeCompare(b.entry_name))
+      setRows(sorted)
+      setUpdated(new Date())
+    }
     setLoading(false)
   }
 
   useEffect(() => {
-    fetch()
+    loadData()
     const ch = supabase.channel('lb')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'golfers' }, fetch)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, fetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'golfers' }, loadData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, loadData)
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [])
@@ -39,7 +51,10 @@ export default function LeaderboardPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div>
           <h1 style={{ color: 'var(--green)', marginBottom: '0.2rem' }}>🏆 Leaderboard</h1>
-          <p style={{ color: 'var(--gray)', fontSize: '0.88rem' }}>Masters Pool 2026 · {rows.length} entries</p>
+          <p style={{ color: 'var(--gray)', fontSize: '0.88rem' }}>
+            Masters Pool 2026 · {rows.length} entries
+            {!poolLocked && <span style={{ marginLeft: 8, fontStyle: 'italic' }}>(alphabetical — rankings revealed at tee time)</span>}
+          </p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#edf7f2', border: '1px solid #b3dfc5', borderRadius: 20, padding: '3px 12px', fontSize: '0.78rem', color: 'var(--green)', fontWeight: 600 }}>

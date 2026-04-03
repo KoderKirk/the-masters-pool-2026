@@ -21,6 +21,7 @@ export default function HomePage() {
   const [golfers, setGolfers] = useState<Golfer[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([])
   const [totalEntries, setTotalEntries] = useState(0)
+  const [showLeader, setShowLeader] = useState(false)
 
   // Join/login form state
   const [mode, setMode] = useState<'join' | 'login'>('join')
@@ -39,16 +40,18 @@ export default function HomePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setAuthed(true)
-        const [{ data: profile }, { data: gs }, { data: lb }, { count }] = await Promise.all([
+        const [{ data: profile }, { data: gs }, { data: lb }, { count }, { data: settings }] = await Promise.all([
           supabase.from('profiles').select('display_name,payment_status').eq('id', user.id).single(),
           supabase.from('golfers').select('name,current_score,position,made_cut').order('current_score', { ascending: true }).limit(10),
           supabase.from('entry_leaderboard').select('*').order('place').limit(25),
           supabase.from('entries').select('*', { count: 'exact', head: true }),
+          supabase.from('pool_settings').select('value').eq('key', 'show_leader').single(),
         ])
         if (profile) { setDisplayName(profile.display_name); setPaymentStatus(profile.payment_status ?? 'pending') }
         if (gs) setGolfers(gs)
         if (lb) setLeaderboard(lb)
         if (count) setTotalEntries(count)
+        if (settings) setShowLeader(!!settings.value)
       } else {
         setAuthed(false)
         const { data: locked } = await supabase.from('entries').select('id').eq('is_locked', true).limit(1)
@@ -101,6 +104,14 @@ export default function HomePage() {
     const second = Math.round(purse * 0.20)
     const third = Math.round(purse * 0.10)
 
+    function leaderLabel(place: number) {
+      const entries = leaderboard.filter(r => r.place === place && !r.is_disqualified)
+      if (entries.length === 0) return '—'
+      if (entries.length === 1) return entries[0].entry_name
+      if (entries.length === 2) return 'Two-way tie'
+      return `${entries.length}-way tie`
+    }
+
     return (
       <div className="page fade-in" style={{ paddingTop: '2rem' }}>
 
@@ -126,12 +137,17 @@ export default function HomePage() {
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
               {[
-                { place: '1st', pct: '70%', amt: first, color: 'var(--gold)' },
-                { place: '2nd', pct: '20%', amt: second, color: '#C0C0C0' },
-                { place: '3rd', pct: '10%', amt: third, color: '#CD7F32' },
+                { place: '1st', placeNum: 1, pct: '70%', amt: first, color: 'var(--gold)' },
+                { place: '2nd', placeNum: 2, pct: '20%', amt: second, color: '#C0C0C0' },
+                { place: '3rd', placeNum: 3, pct: '10%', amt: third, color: '#CD7F32' },
               ].map(p => (
-                <div key={p.place} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.75rem 1.1rem' }}>
+                <div key={p.place} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.75rem 1.1rem', minWidth: 110 }}>
                   <div style={{ color: p.color, fontWeight: 700, fontSize: '1.1rem', fontFamily: 'Playfair Display, serif' }}>{p.place}</div>
+                  {showLeader && (
+                    <div style={{ color: '#fff', fontSize: '0.78rem', fontWeight: 600, marginBottom: 3, opacity: 0.9 }}>
+                      {leaderLabel(p.placeNum)}
+                    </div>
+                  )}
                   <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.25rem' }}>${p.amt.toLocaleString()}</div>
                   <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.73rem' }}>{p.pct}</div>
                 </div>
@@ -330,7 +346,7 @@ export default function HomePage() {
           <li>Need <strong>≥ 3 players to make the cut</strong> or you're DQ'd</li>
           <li>Lowest team score wins · Tiebreaker: had the winner?</li>
           <li>Entries lock <strong>Thursday 5am PT</strong> · No exceptions</li>
-          <li>Pay <strong>$20/entry</strong> · Venmo @KirkOliver or PayPal kirko005@gmail.com</li>
+          <li>Pay <strong>$20/entry</strong> via Venmo or PayPal (details provided after sign-up)</li>
         </ol>
       </div>
 
