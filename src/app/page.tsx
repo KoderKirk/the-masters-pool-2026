@@ -73,9 +73,12 @@ export default function HomePage() {
       })
       if (err) { setError(err.message); setLoading(false); return }
       if (data.user) {
-        await supabase.from('profiles').insert({
-          id: data.user.id, display_name: name, email, is_admin: false, payment_status: 'pending',
-        })
+        const { error: profileErr } = await supabase.from('profiles').upsert({
+          id: data.user.id, display_name: name, is_admin: false, payment_status: 'pending',
+        }, { onConflict: 'id' })
+        if (profileErr) { setError('Account created but profile setup failed: ' + profileErr.message); setLoading(false); return }
+      } else {
+        setError('Signup failed — no user returned. Try signing in instead.'); setLoading(false); return
       }
       router.push('/pick')
     } else {
