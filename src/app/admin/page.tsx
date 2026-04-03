@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
-type Profile = { id: string; display_name: string; is_admin: boolean; payment_status: string }
+type Profile = { id: string; display_name: string; email: string | null; is_admin: boolean; payment_status: string }
 type Entry   = { id: string; user_id: string; entry_name: string; total_points_used: number; is_locked: boolean; golfer_1_id: string; golfer_2_id: string; golfer_3_id: string; golfer_4_id: string }
 type Golfer  = { id: string; name: string; points: number; current_score: number; made_cut: boolean | null; position: string | null }
 
@@ -67,6 +67,24 @@ export default function AdminPage() {
     setMsg('All entries locked.')
   }
 
+  function exportUsers() {
+    const rows = [
+      ['Name', 'Email', 'Payment Status', 'Entries', 'Amount Owed'],
+      ...profiles.map(p => {
+        const n = entries.filter(e => e.user_id === p.id).length
+        return [p.display_name, p.email ?? '', p.payment_status, n, `$${n * 20}`]
+      }),
+    ]
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `masters-pool-users-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (!ok) return <div className="page" style={{ paddingTop: '3rem', textAlign: 'center', color: 'var(--gray)' }}>Checking access…</div>
 
   const pot = entries.length * 20
@@ -103,9 +121,14 @@ export default function AdminPage() {
             fontWeight: 600, fontSize: '0.88rem', borderRadius: '4px 4px 0 0',
           }}>{t.charAt(0).toUpperCase() + t.slice(1)}</button>
         ))}
-        <button className="btn btn-danger" onClick={lockAll} style={{ marginLeft: 'auto', padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
-          🔒 Lock All Entries
-        </button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-ghost" onClick={exportUsers} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
+            📥 Export Users
+          </button>
+          <button className="btn btn-danger" onClick={lockAll} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
+            🔒 Lock All Entries
+          </button>
+        </div>
       </div>
 
       {msg && <p className="success" style={{ padding: '0.5rem 0' }}>✓ {msg}</p>}

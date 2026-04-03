@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS golfers (
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name TEXT NOT NULL,
+  email TEXT,
   is_admin BOOLEAN DEFAULT FALSE,
   payment_status TEXT DEFAULT 'pending',
   created_at TIMESTAMPTZ DEFAULT NOW()

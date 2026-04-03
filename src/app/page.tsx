@@ -17,6 +17,7 @@ export default function HomePage() {
   const router = useRouter()
   const [authed, setAuthed] = useState<boolean | null>(null)
   const [displayName, setDisplayName] = useState('')
+  const [paymentStatus, setPaymentStatus] = useState<string>('pending')
   const [golfers, setGolfers] = useState<Golfer[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([])
   const [totalEntries, setTotalEntries] = useState(0)
@@ -38,12 +39,12 @@ export default function HomePage() {
       if (user) {
         setAuthed(true)
         const [{ data: profile }, { data: gs }, { data: lb }, { count }] = await Promise.all([
-          supabase.from('profiles').select('display_name').eq('id', user.id).single(),
+          supabase.from('profiles').select('display_name,payment_status').eq('id', user.id).single(),
           supabase.from('golfers').select('name,current_score,position,made_cut').order('current_score', { ascending: true }).limit(10),
           supabase.from('entry_leaderboard').select('*').order('place').limit(25),
           supabase.from('entries').select('*', { count: 'exact', head: true }),
         ])
-        if (profile) setDisplayName(profile.display_name)
+        if (profile) { setDisplayName(profile.display_name); setPaymentStatus(profile.payment_status ?? 'pending') }
         if (gs) setGolfers(gs)
         if (lb) setLeaderboard(lb)
         if (count) setTotalEntries(count)
@@ -70,7 +71,7 @@ export default function HomePage() {
       if (err) { setError(err.message); setLoading(false); return }
       if (data.user) {
         await supabase.from('profiles').insert({
-          id: data.user.id, display_name: name, is_admin: false, payment_status: 'pending',
+          id: data.user.id, display_name: name, email, is_admin: false, payment_status: 'pending',
         })
       }
       router.push('/pick')
@@ -132,6 +133,25 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* Unpaid warning */}
+        {paymentStatus !== 'paid' && (
+          <div style={{
+            marginBottom: '1.5rem', padding: '1rem 1.25rem',
+            background: '#fff3cd', border: '2px solid #e6a817', borderRadius: 8,
+            display: 'flex', alignItems: 'center', gap: '0.75rem',
+          }}>
+            <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+            <div>
+              <div style={{ fontWeight: 700, color: '#7a4f00', fontSize: '0.97rem' }}>
+                You are currently marked as unpaid.
+              </div>
+              <div style={{ color: '#7a4f00', fontSize: '0.88rem', marginTop: '0.2rem' }}>
+                Please send $20 per entry · <strong>Venmo @KirkOliver</strong> or <strong>PayPal kirko005@gmail.com</strong>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Two-column: Golfers + Leaderboard */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '1.25rem', alignItems: 'start' }}>
