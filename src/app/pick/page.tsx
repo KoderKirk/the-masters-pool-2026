@@ -19,6 +19,7 @@ export default function PickPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [poolLocked, setPoolLocked] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -29,8 +30,12 @@ export default function PickPage() {
       const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
       if (profile) setEntryName(`${profile.display_name} #1`)
 
-      const { data } = await supabase.from('golfers').select('id,name,points,current_score').order('points', { ascending: false })
-      if (data) setGolfers(data)
+      const [{ data: golferData }, { data: anyLocked }] = await Promise.all([
+        supabase.from('golfers').select('id,name,points,current_score').order('points', { ascending: false }),
+        supabase.from('entries').select('id').eq('is_locked', true).limit(1),
+      ])
+      if (golferData) setGolfers(golferData)
+      if (anyLocked && anyLocked.length > 0) setPoolLocked(true)
       setLoading(false)
     }
     init()
@@ -53,6 +58,7 @@ export default function PickPage() {
   }
 
   async function save() {
+    if (poolLocked) { setError("Sorry, you missed the cut! ✂️ Entries are locked — the tournament has already started."); return }
     if (selected.length !== 4) { setError('Select exactly 4 golfers.'); return }
     if (overBudget) { setError('You are over the 50 point budget.'); return }
     if (!entryName.trim()) { setError('Give your entry a name.'); return }
@@ -75,6 +81,20 @@ export default function PickPage() {
   const filtered = golfers.filter(g => g.name.toLowerCase().includes(search.toLowerCase()))
 
   if (loading) return <div className="page" style={{ paddingTop: '3rem', textAlign: 'center', color: 'var(--gray)' }}>Loading roster…</div>
+
+  if (poolLocked) return (
+    <div className="page fade-in" style={{ paddingTop: '4rem', maxWidth: 520, textAlign: 'center' }}>
+      <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✂️</div>
+      <h1 style={{ color: 'var(--red)', marginBottom: '0.75rem' }}>You Missed the Cut</h1>
+      <p style={{ color: 'var(--gray)', fontSize: '1rem', lineHeight: 1.75, marginBottom: '1.5rem' }}>
+        Entries are locked — the Masters has started and your window to pick has closed.<br />
+        <strong>No changes or new entries are allowed.</strong>
+      </p>
+      <p style={{ color: 'var(--gray)', fontSize: '0.88rem' }}>
+        Head to the <a href="/leaderboard">Leaderboard</a> to see how your team is doing. 🏌️
+      </p>
+    </div>
+  )
 
   return (
     <div className="page fade-in" style={{ paddingTop: '2rem' }}>
@@ -201,7 +221,7 @@ export default function PickPage() {
           <button
             className="btn btn-primary"
             onClick={save}
-            disabled={saving || selected.length !== 4 || overBudget}
+            disabled={saving || selected.length !== 4 || overBudget || poolLocked}
             style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
           >
             {saving ? 'Saving…' : '⛳  Submit Entry'}

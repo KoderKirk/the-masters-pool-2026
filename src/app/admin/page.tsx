@@ -64,7 +64,14 @@ export default function AdminPage() {
 
   async function lockAll() {
     await supabase.from('entries').update({ is_locked: true }).neq('id', '00000000-0000-0000-0000-000000000000')
+    setEntries(prev => prev.map(e => ({ ...e, is_locked: true })))
     setMsg('All entries locked.')
+  }
+
+  async function unlockAll() {
+    await supabase.from('entries').update({ is_locked: false }).neq('id', '00000000-0000-0000-0000-000000000000')
+    setEntries(prev => prev.map(e => ({ ...e, is_locked: false })))
+    setMsg('All entries unlocked.')
   }
 
   function exportUsers() {
@@ -124,6 +131,9 @@ export default function AdminPage() {
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
           <button className="btn btn-ghost" onClick={exportUsers} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
             📥 Export Users
+          </button>
+          <button className="btn btn-ghost" onClick={unlockAll} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
+            🔓 Unlock All
           </button>
           <button className="btn btn-danger" onClick={lockAll} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
             🔒 Lock All Entries
