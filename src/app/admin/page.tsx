@@ -1,0 +1,213 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { supabase } from '../../lib/supabase'
+import { useRouter } from 'next/navigation'
+
+type Profile = { id: string; display_name: string; is_admin: boolean; payment_status: string }
+type Entry   = { id: string; user_id: string; entry_name: string; total_points_used: number; is_locked: boolean; golfer_1_id: string; golfer_2_id: string; golfer_3_id: string; golfer_4_id: string }
+type Golfer  = { id: string; name: string; points: number; current_score: number; made_cut: boolean | null; position: string | null }
+
+export default function AdminPage() {
+  const router = useRouter()
+  const [ok, setOk] = useState(false)
+  const [tab, setTab] = useState<'entries' | 'payments' | 'scores'>('entries')
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [entries, setEntries] = useState<Entry[]>([])
+  const [golfers, setGolfers] = useState<Golfer[]>([])
+  const [scores, setScores] = useState<Record<string, string>>({})
+  const [cut, setCut] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/'); return }
+      const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      if (!p?.is_admin) { router.push('/'); return }
+      setOk(true)
+      const [{ data: ps }, { data: es }, { data: gs }] = await Promise.all([
+        supabase.from('profiles').select('*').order('display_name'),
+        supabase.from('entries').select('*').order('created_at'),
+        supabase.from('golfers').select('*').order('points', { ascending: false }),
+      ])
+      if (ps) setProfiles(ps)
+      if (es) setEntries(es)
+      if (gs) {
+        setGolfers(gs)
+        const s: Record<string, string> = {}
+        const c: Record<string, string> = {}
+        gs.forEach(g => {
+          s[g.id] = String(g.current_score ?? 0)
+          c[g.id] = g.made_cut === true ? 'yes' : g.made_cut === false ? 'no' : 'tbd'
+        })
+        setScores(s); setCut(c)
+      }
+    }
+    init()
+  }, [router])
+
+  async function markPaid(id: string) {
+    await supabase.from('profiles').update({ payment_status: 'paid' }).eq('id', id)
+    setProfiles(prev => prev.map(p => p.id === id ? { ...p, payment_status: 'paid' } : p))
+  }
+
+  async function saveScores() {
+    setSaving(true); setMsg('')
+    for (const g of golfers) {
+      const s = parseInt(scores[g.id] ?? '0', 10) || 0
+      const mc = cut[g.id] === 'yes' ? true : cut[g.id] === 'no' ? false : null
+      await supabase.from('golfers').update({ current_score: s, made_cut: mc, updated_at: new Date().toISOString() }).eq('id', g.id)
+    }
+    setSaving(false); setMsg('Scores saved!')
+  }
+
+  async function lockAll() {
+    await supabase.from('entries').update({ is_locked: true }).neq('id', '00000000-0000-0000-0000-000000000000')
+    setMsg('All entries locked.')
+  }
+
+  if (!ok) return <div className="page" style={{ paddingTop: '3rem', textAlign: 'center', color: 'var(--gray)' }}>Checking access…</div>
+
+  const pot = entries.length * 20
+  const paid = profiles.filter(p => p.payment_status === 'paid').length
+
+  return (
+    <div className="page fade-in" style={{ paddingTop: '2rem' }}>
+      <h1 style={{ color: 'var(--green)', marginBottom: '0.25rem' }}>🛠 Admin</h1>
+      <p style={{ color: 'var(--gray)', fontSize: '0.88rem', marginBottom: '1.75rem' }}>Masters Pool 2026 · Kirk only</p>
+
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.75rem' }}>
+        {[
+          { icon: '📋', label: 'Entries', val: entries.length },
+          { icon: '👤', label: 'Players', val: profiles.length },
+          { icon: '💰', label: 'Paid', val: `${paid}/${profiles.length}` },
+          { icon: '🏆', label: 'Pot', val: `$${pot}` },
+        ].map(s => (
+          <div key={s.label} className="card" style={{ textAlign: 'center', padding: '1rem' }}>
+            <div style={{ fontSize: '1.4rem' }}>{s.icon}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--green)', fontFamily: 'Playfair Display, serif' }}>{s.val}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs + lock button */}
+      <div style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid var(--green)', marginBottom: 0 }}>
+        {(['entries', 'payments', 'scores'] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            padding: '0.55rem 1.1rem', border: 'none', cursor: 'pointer',
+            background: tab === t ? 'var(--green)' : 'transparent',
+            color: tab === t ? '#fff' : 'var(--green)',
+            fontWeight: 600, fontSize: '0.88rem', borderRadius: '4px 4px 0 0',
+          }}>{t.charAt(0).toUpperCase() + t.slice(1)}</button>
+        ))}
+        <button className="btn btn-danger" onClick={lockAll} style={{ marginLeft: 'auto', padding: '0.4rem 0.9rem', fontSize: '0.82rem' }}>
+          🔒 Lock All Entries
+        </button>
+      </div>
+
+      {msg && <p className="success" style={{ padding: '0.5rem 0' }}>✓ {msg}</p>}
+
+      <div style={{ background: 'var(--white)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+
+        {/* Entries tab */}
+        {tab === 'entries' && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+            <thead style={{ background: 'var(--cream-dark)' }}>
+              <tr>{['#', 'Entry', 'G1', 'G2', 'G3', 'G4', 'Pts', 'Locked'].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {entries.map((e, i) => {
+                const gName = (id: string) => golfers.find(g => g.id === id)?.name?.split(' ').pop() ?? '—'
+                return (
+                  <tr key={e.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                    <td style={td2}>{i + 1}</td>
+                    <td style={td2}>{e.entry_name}</td>
+                    <td style={td2}>{gName(e.golfer_1_id)}</td>
+                    <td style={td2}>{gName(e.golfer_2_id)}</td>
+                    <td style={td2}>{gName(e.golfer_3_id)}</td>
+                    <td style={td2}>{gName(e.golfer_4_id)}</td>
+                    <td style={{ ...td2, color: 'var(--gold)', fontWeight: 700 }}>{e.total_points_used}</td>
+                    <td style={td2}>{e.is_locked ? '🔒' : '✏️'}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {/* Payments tab */}
+        {tab === 'payments' && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+            <thead style={{ background: 'var(--cream-dark)' }}>
+              <tr>{['Player', 'Entries', 'Owes', 'Status', ''].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {profiles.map((p, i) => {
+                const n = entries.filter(e => e.user_id === p.id).length
+                const paid = p.payment_status === 'paid'
+                return (
+                  <tr key={p.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                    <td style={td2}>{p.display_name}</td>
+                    <td style={td2}>{n}</td>
+                    <td style={td2}>${n * 20}</td>
+                    <td style={td2}>
+                      <span className={`tag ${paid ? 'tag-green' : 'tag-gold'}`}>{p.payment_status}</span>
+                    </td>
+                    <td style={td2}>
+                      {!paid && (
+                        <button className="btn btn-primary" onClick={() => markPaid(p.id)} style={{ padding: '3px 10px', fontSize: '0.8rem' }}>
+                          Mark Paid
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {/* Scores tab */}
+        {tab === 'scores' && (
+          <div style={{ padding: '1.25rem' }}>
+            <p style={{ color: 'var(--gray)', fontSize: '0.88rem', marginBottom: '1rem' }}>
+              Enter scores vs par (e.g. -5 for 5 under). Set cut status after Friday's round.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem', maxHeight: 480, overflowY: 'auto' }}>
+              {golfers.map(g => (
+                <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'var(--cream)', borderRadius: 5, border: '1px solid var(--border)' }}>
+                  <span style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600 }}>{g.name.split(' ').pop()}</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--gray)' }}>{g.points}pt</span>
+                  <input
+                    type="number"
+                    value={scores[g.id] ?? '0'}
+                    onChange={e => setScores(p => ({ ...p, [g.id]: e.target.value }))}
+                    style={{ width: 50, padding: '3px 5px', border: '1px solid var(--border)', borderRadius: 4, fontSize: '0.85rem', textAlign: 'center' }}
+                  />
+                  <select
+                    value={cut[g.id] ?? 'tbd'}
+                    onChange={e => setCut(p => ({ ...p, [g.id]: e.target.value }))}
+                    style={{ padding: '2px 4px', border: '1px solid var(--border)', borderRadius: 4, fontSize: '0.75rem' }}
+                  >
+                    <option value="tbd">TBD</option>
+                    <option value="yes">Cut ✓</option>
+                    <option value="no">MC ✗</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-primary" onClick={saveScores} disabled={saving} style={{ marginTop: '1.25rem', padding: '0.7rem 2rem' }}>
+              {saving ? 'Saving…' : '💾 Save All Scores'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const th2: React.CSSProperties = { padding: '0.55rem 0.75rem', textAlign: 'left', fontWeight: 600, fontSize: '0.78rem', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--border)' }
+const td2: React.CSSProperties = { padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)', fontSize: '0.87rem' }
