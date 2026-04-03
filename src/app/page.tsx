@@ -54,11 +54,6 @@ export default function HomePage() {
     init()
   }, [])
 
-  async function handleSignOut() {
-    await supabase.auth.signOut()
-    setAuthed(false)
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -111,7 +106,6 @@ export default function HomePage() {
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <a href="/pick" className="btn btn-ghost" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>My Picks</a>
             <a href="/leaderboard" className="btn btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>Full Leaderboard</a>
-            <button onClick={handleSignOut} className="btn btn-ghost" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>Sign Out</button>
           </div>
         </div>
 

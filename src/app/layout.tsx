@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import NavAuth from './components/NavAuth'
 
 export const metadata: Metadata = {
   title: 'Masters Pool 2026',
@@ -104,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 MASTERS POOL 2026
               </span>
             </a>
-            <div style={{ display: 'flex', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
               {[
                 { href: '/leaderboard', label: 'Leaderboard' },
                 { href: '/pick',        label: 'My Picks' },
@@ -114,6 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   {l.label}
                 </a>
               ))}
+              <NavAuth />
             </div>
           </div>
         </nav>
