@@ -27,8 +27,14 @@ export default function PickPage() {
       if (!user) { router.push('/'); return }
       setUserId(user.id)
 
-      const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
-      if (profile) setEntryName(`${profile.display_name} #1`)
+      let { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
+      if (!profile) {
+        // Profile missing (e.g. signup interrupted) — create it now
+        const displayName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Player'
+        await supabase.from('profiles').upsert({ id: user.id, display_name: displayName, is_admin: false, payment_status: 'pending' }, { onConflict: 'id' })
+        profile = { display_name: displayName }
+      }
+      setEntryName(`${profile.display_name} #1`)
 
       const [{ data: golferData }, { data: anyLocked }] = await Promise.all([
         supabase.from('golfers').select('id,name,points,current_score').order('points', { ascending: false }),
