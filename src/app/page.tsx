@@ -61,7 +61,7 @@ router.push('/pick')
       {/* Hero */}
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <div style={{ fontSize: '3.5rem', marginBottom: '0.75rem' }}>⛳</div>
-        <h1 style={{ fontSize: '2.4rem', color: 'var(--green)', marginBottom: '0.4rem' }}>KO Masters Pool</h1>
+        <h1 style={{ fontSize: '2.4rem', color: 'var(--green)', marginBottom: '0.4rem' }}>Masters Pool</h1>
         <p style={{ color: 'var(--gold)', fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '1.05rem', marginBottom: '1.25rem' }}>
           Augusta National · April 2026
         </p>
@@ -96,11 +96,11 @@ router.push('/pick')
             <>
               <div>
                 <label style={labelStyle}>Pool Password</label>
-                <input className="input" placeholder="Ask Kirk for the code" value={poolPass} onChange={e => setPoolPass(e.target.value)} required />
+                <input className="input" placeholder="Ask for the code" value={poolPass} onChange={e => setPoolPass(e.target.value)} required />
               </div>
               <div>
                 <label style={labelStyle}>Your Name</label>
-                <input className="input" placeholder="e.g. Kirk Oliver" value={name} onChange={e => setName(e.target.value)} required />
+                <input className="input" placeholder="e.g. John Smith" value={name} onChange={e => setName(e.target.value)} required />
               </div>
             </>
           )}
