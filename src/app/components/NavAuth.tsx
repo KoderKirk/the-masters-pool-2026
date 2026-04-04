@@ -28,6 +28,7 @@ export default function NavAuth() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+      {authed && <a href="/" style={linkStyle}>Dashboard</a>}
       {authed && <a href="/leaderboard" style={linkStyle}>Leaderboard</a>}
       {authed && <a href="/pick" style={linkStyle}>My Picks</a>}
       {authed && isAdmin && <a href="/admin" style={linkStyle}>Admin</a>}
