@@ -10,6 +10,12 @@ type SavedEntry = {
   id: string; entry_number: number; entry_name: string; total_points_used: number; is_locked: boolean
   golfer_1_id: string; golfer_2_id: string; golfer_3_id: string; golfer_4_id: string
 }
+type LbEntry = {
+  entry_id: string; entry_name: string; place: number; team_score: number; is_disqualified: boolean
+  golfer_1: string; score_1: number; golfer_2: string; score_2: number
+  golfer_3: string; score_3: number; golfer_4: string; score_4: number
+  total_points_used: number
+}
 
 export default function PickPage() {
   const router = useRouter()
@@ -25,6 +31,7 @@ export default function PickPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [poolLocked, setPoolLocked] = useState(false)
   const [savedEntries, setSavedEntries] = useState<SavedEntry[]>([])
+  const [lbEntries, setLbEntries] = useState<LbEntry[]>([])
   const [displayName, setDisplayName] = useState('')
   const [editingNum, setEditingNum] = useState<number | null>(null)
 
@@ -43,14 +50,16 @@ export default function PickPage() {
       setDisplayName(profile.display_name)
       setEntryName(`${profile.display_name} #1`)
 
-      const [{ data: golferData }, { data: anyLocked }, { data: existingEntries }] = await Promise.all([
+      const [{ data: golferData }, { data: anyLocked }, { data: existingEntries }, { data: lb }] = await Promise.all([
         supabase.from('golfers').select('id,name,points,current_score').order('points', { ascending: false }),
         supabase.from('entries').select('id').eq('is_locked', true).limit(1),
         supabase.from('entries').select('*').eq('user_id', user.id).order('entry_number'),
+        supabase.from('entry_leaderboard').select('*').eq('user_id', user.id).order('place'),
       ])
       if (golferData) setGolfers(golferData)
       if (anyLocked && anyLocked.length > 0) setPoolLocked(true)
       if (existingEntries) setSavedEntries(existingEntries)
+      if (lb) setLbEntries(lb)
       setLoading(false)
     }
     init()
@@ -117,16 +126,79 @@ export default function PickPage() {
   if (loading) return <div className="page" style={{ paddingTop: '3rem', textAlign: 'center', color: 'var(--gray)' }}>Loading roster…</div>
 
   if (poolLocked) return (
-    <div className="page fade-in" style={{ paddingTop: '4rem', maxWidth: 520, textAlign: 'center' }}>
-      <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✂️</div>
-      <h1 style={{ color: 'var(--red)', marginBottom: '0.75rem' }}>You Missed the Cut</h1>
-      <p style={{ color: 'var(--gray)', fontSize: '1rem', lineHeight: 1.75, marginBottom: '1.5rem' }}>
-        Entries are locked — the Masters has started and your window to pick has closed.<br />
-        <strong>No changes or new entries are allowed.</strong>
-      </p>
-      <p style={{ color: 'var(--gray)', fontSize: '0.88rem' }}>
-        Head to the <a href="/leaderboard">Leaderboard</a> to see how your team is doing. 🏌️
-      </p>
+    <div className="page fade-in" style={{ paddingTop: '2.5rem', maxWidth: 680 }}>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>✂️</div>
+        <h1 style={{ color: 'var(--red)', marginBottom: '0.4rem' }}>You Missed the Cut</h1>
+        <p style={{ color: 'var(--gray)', fontSize: '0.92rem' }}>
+          Entries are locked — the Masters has started. No changes allowed.
+        </p>
+      </div>
+
+      {lbEntries.length > 0 ? (
+        <div>
+          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+            Your Entries
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {lbEntries.map(row => {
+              const golferCols = [
+                { name: row.golfer_1, score: row.score_1 },
+                { name: row.golfer_2, score: row.score_2 },
+                { name: row.golfer_3, score: row.score_3 },
+                { name: row.golfer_4, score: row.score_4 },
+              ]
+              const placeColor = row.is_disqualified ? 'var(--red)' : row.place === 1 ? 'var(--gold)' : row.place === 2 ? '#888' : row.place === 3 ? '#CD7F32' : 'var(--gray)'
+              const scoreColor = (row.team_score ?? 0) < 0 ? 'var(--red)' : (row.team_score ?? 0) === 0 ? 'var(--dark)' : '#3a6ea5'
+              return (
+                <div key={row.entry_id} className="card" style={{ padding: '1rem 1.25rem', border: `2px solid ${row.is_disqualified ? 'var(--red)' : 'var(--border)'}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 36, height: 36, borderRadius: '50%', fontWeight: 700, fontSize: '0.9rem',
+                        background: row.is_disqualified ? '#fdeaea' : row.place <= 3 ? placeColor : 'var(--cream-dark)',
+                        color: row.is_disqualified ? 'var(--red)' : row.place <= 3 ? '#fff' : 'var(--gray)',
+                      }}>
+                        {row.is_disqualified ? 'DQ' : row.place}
+                      </span>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--dark)' }}>{row.entry_name}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--gray)' }}>{row.total_points_used}pt used</div>
+                      </div>
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: '1.4rem', color: scoreColor }}>
+                      {(row.team_score ?? 0) === 0 ? 'E' : (row.team_score ?? 0) > 0 ? `+${row.team_score}` : row.team_score}
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                    {golferCols.map((g, i) => (
+                      <div key={i} style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: 5, padding: '0.4rem 0.6rem', fontSize: '0.82rem', textAlign: 'center' }}>
+                        <div style={{ fontWeight: 600 }}>{g.name?.split(' ').pop()}</div>
+                        <div style={{ color: (g.score ?? 0) < 0 ? 'var(--red)' : '#3a6ea5', fontWeight: 700, fontSize: '0.9rem' }}>
+                          {(g.score ?? 0) === 0 ? 'E' : (g.score ?? 0) > 0 ? `+${g.score}` : g.score}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {row.is_disqualified && (
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--red)', fontStyle: 'italic' }}>
+                      Disqualified — fewer than 3 golfers made the cut.
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.88rem', color: 'var(--gray)' }}>
+            <a href="/leaderboard">View full leaderboard →</a>
+          </p>
+        </div>
+      ) : (
+        <p style={{ textAlign: 'center', color: 'var(--gray)', fontSize: '0.92rem' }}>
+          You didn't submit any entries. <a href="/leaderboard">View the leaderboard →</a>
+        </p>
+      )}
     </div>
   )
 
