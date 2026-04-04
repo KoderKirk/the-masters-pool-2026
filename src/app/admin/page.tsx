@@ -73,9 +73,10 @@ export default function AdminPage() {
 
   async function toggleShowLeader() {
     const next = !showLeader
-    await supabase.from('pool_settings').update({ value: next }).eq('key', 'show_leader')
+    const { error } = await supabase.from('pool_settings').upsert({ key: 'show_leader', value: next }, { onConflict: 'key' })
+    if (error) { setMsg(`⚠ Failed to save: ${error.message}`); return }
     setShowLeader(next)
-    setMsg(next ? 'Leaderboard names now visible on dashboard.' : 'Leaderboard names hidden.')
+    setMsg(next ? '✓ Leaders ON — names now visible on dashboard.' : '✓ Leaders OFF — names hidden.')
   }
 
   async function unlockAll() {
