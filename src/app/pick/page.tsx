@@ -34,6 +34,9 @@ export default function PickPage() {
   const [lbEntries, setLbEntries] = useState<LbEntry[]>([])
   const [displayName, setDisplayName] = useState('')
   const [editingNum, setEditingNum] = useState<number | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'venmo' | 'paypal' | ''>('')
+  const [paymentHandle, setPaymentHandle] = useState('')
+  const [paymentSaved, setPaymentSaved] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -41,14 +44,16 @@ export default function PickPage() {
       if (!user) { router.push('/'); return }
       setUserId(user.id)
 
-      let { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
+      let { data: profile } = await supabase.from('profiles').select('display_name,payment_method,payment_handle').eq('id', user.id).single()
       if (!profile) {
         const dn = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Player'
         await supabase.from('profiles').upsert({ id: user.id, display_name: dn, is_admin: false, payment_status: 'pending' }, { onConflict: 'id' })
-        profile = { display_name: dn }
+        profile = { display_name: dn, payment_method: null, payment_handle: null }
       }
       setDisplayName(profile.display_name)
       setEntryName(`${profile.display_name} #1`)
+      if (profile.payment_method) setPaymentMethod(profile.payment_method as 'venmo' | 'paypal')
+      if (profile.payment_handle) setPaymentHandle(profile.payment_handle)
 
       const [{ data: golferData }, { data: anyLocked }, { data: existingEntries }, { data: lb }] = await Promise.all([
         supabase.from('golfers').select('id,name,points,current_score').order('points', { ascending: false }),
@@ -119,6 +124,13 @@ export default function PickPage() {
     setEntryNum(next)
     setEntryName(`${displayName} #${next}`)
     setSelected([])
+  }
+
+  async function savePaymentInfo() {
+    if (!userId || !paymentMethod || !paymentHandle.trim()) return
+    await supabase.from('profiles').update({ payment_method: paymentMethod, payment_handle: paymentHandle.trim() }).eq('id', userId)
+    setPaymentSaved(true)
+    setTimeout(() => setPaymentSaved(false), 2000)
   }
 
   const filtered = golfers.filter(g => g.name.toLowerCase().includes(search.toLowerCase()))
@@ -400,6 +412,56 @@ export default function PickPage() {
         </div>
 
       </div>
+
+      {/* Payment info */}
+      <div className="card" style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ flex: '0 0 auto' }}>
+          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--green)', marginBottom: '0.2rem' }}>💳 Payment Info</div>
+          <div style={{ fontSize: '0.82rem', color: 'var(--gray)', maxWidth: 220 }}>
+            Let us match your payment. Send $20/entry to Kirk via:
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 260, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 5, overflow: 'hidden', width: 'fit-content' }}>
+            {(['venmo', 'paypal'] as const).map(m => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => { setPaymentMethod(m); setPaymentSaved(false) }}
+                style={{
+                  padding: '0.4rem 1.1rem', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
+                  background: paymentMethod === m ? 'var(--green)' : 'transparent',
+                  color: paymentMethod === m ? '#fff' : 'var(--gray)',
+                }}
+              >
+                {m === 'venmo' ? 'Venmo' : 'PayPal'}
+              </button>
+            ))}
+          </div>
+          {paymentMethod && (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input
+                className="input"
+                placeholder={paymentMethod === 'venmo' ? '@your-handle' : 'your@email.com'}
+                value={paymentHandle}
+                onChange={e => { setPaymentHandle(e.target.value); setPaymentSaved(false) }}
+                onBlur={savePaymentInfo}
+                style={{ fontSize: '0.88rem', maxWidth: 260 }}
+              />
+              <button
+                type="button"
+                onClick={savePaymentInfo}
+                disabled={!paymentHandle.trim()}
+                className="btn btn-ghost"
+                style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+              >
+                {paymentSaved ? '✓ Saved' : 'Save'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   )
 }

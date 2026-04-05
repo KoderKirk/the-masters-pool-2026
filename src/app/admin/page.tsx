@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
-type Profile = { id: string; display_name: string; email: string | null; is_admin: boolean; payment_status: string }
+type Profile = { id: string; display_name: string; email: string | null; is_admin: boolean; payment_status: string; payment_method: string | null; payment_handle: string | null }
 type Entry   = { id: string; user_id: string; entry_name: string; total_points_used: number; is_locked: boolean; golfer_1_id: string; golfer_2_id: string; golfer_3_id: string; golfer_4_id: string }
 type Golfer  = { id: string; name: string; points: number; current_score: number; made_cut: boolean | null; position: string | null }
 
@@ -210,7 +210,7 @@ export default function AdminPage() {
         {tab === 'payments' && (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
             <thead style={{ background: 'var(--cream-dark)' }}>
-              <tr>{['Player', 'Entries', 'Owes', 'Status', ''].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+              <tr>{['Player', 'Entries', 'Owes', 'Payment', 'Status', ''].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {profiles.map((p, i) => {
@@ -221,6 +221,11 @@ export default function AdminPage() {
                     <td style={td2}>{p.display_name}</td>
                     <td style={td2}>{n}</td>
                     <td style={td2}>${n * 20}</td>
+                    <td style={td2}>
+                      {p.payment_method && p.payment_handle
+                        ? <span style={{ fontSize: '0.82rem' }}><span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{p.payment_method}</span>: {p.payment_handle}</span>
+                        : <span style={{ color: '#bbb', fontSize: '0.8rem' }}>—</span>}
+                    </td>
                     <td style={td2}>
                       <span className={`tag ${paid ? 'tag-green' : 'tag-gold'}`}>{p.payment_status}</span>
                     </td>
