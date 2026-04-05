@@ -237,40 +237,42 @@ export default function HomePage() {
         {/* Two-column: Golfers + Leaderboard */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '1.25rem', alignItems: 'start' }}>
 
-          {/* Top 10 Golfers */}
+          {/* Golfer Scoreboard */}
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--cream-dark)' }}>
               <h3 style={{ fontSize: '0.9rem', color: 'var(--green)', margin: 0 }}>🏌️ Golfer Scoreboard</h3>
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.87rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--cream)' }}>
-                  <th style={th}>Pos</th>
-                  <th style={{ ...th, textAlign: 'left' }}>Player</th>
-                  <th style={th}>Score</th>
-                  <th style={th}>Cut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {golfers.map((g, i) => (
-                  <tr key={g.name} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
-                    <td style={{ ...td, textAlign: 'center', color: 'var(--gray)', fontSize: '0.8rem' }}>{g.position ?? i + 1}</td>
-                    <td style={{ ...td }}>{g.name.split(' ').slice(-1)[0]}</td>
-                    <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: (g.current_score ?? 0) < 0 ? 'var(--red)' : (g.current_score ?? 0) === 0 ? 'var(--dark)' : '#3a6ea5' }}>
-                      {formatScore(g.current_score)}
-                    </td>
-                    <td style={{ ...td, textAlign: 'center', fontSize: '0.75rem' }}>
-                      {g.made_cut === true ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>✓</span>
-                        : g.made_cut === false ? <span style={{ color: 'var(--red)', fontWeight: 600 }}>✗</span>
-                        : <span style={{ color: 'var(--gray)' }}>—</span>}
-                    </td>
+            <div style={{ overflowY: 'auto', maxHeight: 900 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.87rem' }}>
+                <thead>
+                  <tr style={{ background: 'var(--cream)', position: 'sticky', top: 0, zIndex: 1 }}>
+                    <th style={th}>Pos</th>
+                    <th style={{ ...th, textAlign: 'left' }}>Player</th>
+                    <th style={th}>Score</th>
+                    <th style={th}>Cut</th>
                   </tr>
-                ))}
-                {golfers.length === 0 && (
-                  <tr><td colSpan={4} style={{ ...td, textAlign: 'center', color: 'var(--gray)', padding: '1.5rem' }}>Tournament not yet started</td></tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {golfers.map((g, i) => (
+                    <tr key={g.name} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                      <td style={{ ...td, textAlign: 'center', color: 'var(--gray)', fontSize: '0.8rem' }}>{g.position ?? i + 1}</td>
+                      <td style={{ ...td }}>{g.name.split(' ').slice(-1)[0]}</td>
+                      <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: (g.current_score ?? 0) < 0 ? 'var(--red)' : (g.current_score ?? 0) === 0 ? 'var(--dark)' : '#3a6ea5' }}>
+                        {formatScore(g.current_score)}
+                      </td>
+                      <td style={{ ...td, textAlign: 'center', fontSize: '0.75rem' }}>
+                        {g.made_cut === true ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>✓</span>
+                          : g.made_cut === false ? <span style={{ color: 'var(--red)', fontWeight: 600 }}>✗</span>
+                          : <span style={{ color: 'var(--gray)' }}>—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                  {golfers.length === 0 && (
+                    <tr><td colSpan={4} style={{ ...td, textAlign: 'center', color: 'var(--gray)', padding: '1.5rem' }}>Tournament not yet started</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Top 25 Entries */}
