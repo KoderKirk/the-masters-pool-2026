@@ -50,14 +50,19 @@ export default function AdminPage() {
     init()
   }, [router])
 
-  async function markPaid(id: string) {
-    await supabase.from('profiles').update({ payment_status: 'paid' }).eq('id', id)
-    setProfiles(prev => prev.map(p => p.id === id ? { ...p, payment_status: 'paid' } : p))
-  }
-
-  async function markUnpaid(id: string) {
-    await supabase.from('profiles').update({ payment_status: 'pending' }).eq('id', id)
-    setProfiles(prev => prev.map(p => p.id === id ? { ...p, payment_status: 'pending' } : p))
+  async function updatePayment(id: string, status: 'paid' | 'pending') {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin/update-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ user_id: id, payment_status: status }),
+    })
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      setMsg(`⚠ Failed to update payment: ${json.error ?? res.status}`)
+      return
+    }
+    setProfiles(prev => prev.map(p => p.id === id ? { ...p, payment_status: status } : p))
   }
 
   async function saveScores() {
@@ -231,8 +236,8 @@ export default function AdminPage() {
                     </td>
                     <td style={td2}>
                       {paid
-                        ? <button className="btn btn-ghost" onClick={() => markUnpaid(p.id)} style={{ padding: '3px 10px', fontSize: '0.8rem', color: 'var(--red)', borderColor: 'var(--red)' }}>Undo</button>
-                        : <button className="btn btn-primary" onClick={() => markPaid(p.id)} style={{ padding: '3px 10px', fontSize: '0.8rem' }}>Mark Paid</button>
+                        ? <button className="btn btn-ghost" onClick={() => updatePayment(p.id, 'pending')} style={{ padding: '3px 10px', fontSize: '0.8rem', color: 'var(--red)', borderColor: 'var(--red)' }}>Undo</button>
+                        : <button className="btn btn-primary" onClick={() => updatePayment(p.id, 'paid')} style={{ padding: '3px 10px', fontSize: '0.8rem' }}>Mark Paid</button>
                       }
                     </td>
                   </tr>
