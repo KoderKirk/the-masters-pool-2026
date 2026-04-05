@@ -116,38 +116,55 @@ export default function AdminPage() {
     const g = golfers.find(g => g.id === id)
     return sum + (g?.points ?? 0)
   }, 0)
+  const poolLocked = entries.length > 0 && entries.every(e => e.is_locked)
 
   async function createEntry(e: React.FormEvent) {
     e.preventDefault()
+    if (poolLocked) { setMsg('⚠ Entries are locked. Use "Unlock All" before adding new entries.'); return }
     if (newGolferIds.some(id => !id)) { setMsg('⚠ Select all 4 golfers.'); return }
     if (new Set(newGolferIds).size !== 4) { setMsg('⚠ Each golfer must be different.'); return }
     if (newTotalPts > 50) { setMsg('⚠ Total points exceed 50.'); return }
     setCreating(true); setMsg('')
-    const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch('/api/admin/create-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-      body: JSON.stringify({
-        display_name: newName,
-        payment_status: newPaid ? 'paid' : 'pending',
-        golfer_1_id: newGolferIds[0],
-        golfer_2_id: newGolferIds[1],
-        golfer_3_id: newGolferIds[2],
-        golfer_4_id: newGolferIds[3],
-        total_points_used: newTotalPts,
-      }),
-    })
-    const json = await res.json()
-    if (!res.ok) { setMsg(`⚠ ${json.error}`); setCreating(false); return }
-    setMsg(`✓ Entry added for ${newName}.`)
-    setNewName(''); setNewPaid(false); setNewGolferIds(['', '', '', ''])
-    const [{ data: ps }, { data: es }] = await Promise.all([
-      supabase.from('profiles').select('*').order('display_name'),
-      supabase.from('entries').select('*').order('created_at'),
-    ])
-    if (ps) setProfiles(ps)
-    if (es) setEntries(es)
-    setCreating(false)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setMsg('⚠ Session expired — please refresh the page.'); return }
+      const res = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          display_name: newName,
+          payment_status: newPaid ? 'paid' : 'pending',
+          golfer_1_id: newGolferIds[0],
+          golfer_2_id: newGolferIds[1],
+          golfer_3_id: newGolferIds[2],
+          golfer_4_id: newGolferIds[3],
+          total_points_used: newTotalPts,
+          is_locked: false,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) { setMsg(`⚠ ${json.error}`); return }
+      setMsg(`✓ Entry added for ${newName}.`)
+      setNewName(''); setNewPaid(false); setNewGolferIds(['', '', '', ''])
+      const [{ data: ps }, { data: es }] = await Promise.all([
+        supabase.from('profiles').select('*').order('display_name'),
+        supabase.from('entries').select('*').order('created_at'),
+      ])
+      if (ps) setProfiles(ps)
+      if (es) setEntries(es)
+    } catch (err) {
+      setMsg(`⚠ Unexpected error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function deleteEntry(id: string, name: string) {
+    if (!window.confirm(`Delete entry "${name}"?\n\nThis cannot be undone.`)) return
+    const { error } = await supabase.from('entries').delete().eq('id', id)
+    if (error) { setMsg(`⚠ Failed to delete: ${error.message}`); return }
+    setEntries(prev => prev.filter(e => e.id !== id))
+    setMsg(`Entry "${name}" deleted.`)
   }
 
   if (!ok) return <div className="page" style={{ paddingTop: '3rem', textAlign: 'center', color: 'var(--gray)' }}>Checking access…</div>
@@ -202,7 +219,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {msg && <p className="success" style={{ padding: '0.5rem 0' }}>✓ {msg}</p>}
+      {msg && <p className={msg.startsWith('⚠') ? 'error' : 'success'} style={{ padding: '0.5rem 0' }}>{msg.startsWith('⚠') ? msg : `✓ ${msg}`}</p>}
 
       <div style={{ background: 'var(--white)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
 
@@ -210,7 +227,7 @@ export default function AdminPage() {
         {tab === 'entries' && (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
             <thead style={{ background: 'var(--cream-dark)' }}>
-              <tr>{['#', 'Entry', 'G1', 'G2', 'G3', 'G4', 'Pts', 'Locked'].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
+              <tr>{['#', 'Entry', 'G1', 'G2', 'G3', 'G4', 'Pts', 'Locked', ''].map(h => <th key={h} style={th2}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {entries.map((e, i) => {
@@ -225,6 +242,14 @@ export default function AdminPage() {
                     <td style={td2}>{gName(e.golfer_4_id)}</td>
                     <td style={{ ...td2, color: 'var(--gold)', fontWeight: 700 }}>{e.total_points_used}</td>
                     <td style={td2}>{e.is_locked ? '🔒' : '✏️'}</td>
+                    <td style={td2}>
+                      <button
+                        onClick={() => deleteEntry(e.id, e.entry_name)}
+                        style={{ padding: '2px 8px', fontSize: '0.75rem', background: 'none', border: '1px solid var(--red)', color: 'var(--red)', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 )
               })}
