@@ -10,7 +10,7 @@ type Golfer  = { id: string; name: string; points: number; current_score: number
 export default function AdminPage() {
   const router = useRouter()
   const [ok, setOk] = useState(false)
-  const [tab, setTab] = useState<'entries' | 'payments' | 'scores'>('entries')
+  const [tab, setTab] = useState<'entries' | 'payments' | 'scores' | 'accounts'>('entries')
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [entries, setEntries] = useState<Entry[]>([])
   const [golfers, setGolfers] = useState<Golfer[]>([])
@@ -19,6 +19,10 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [showLeader, setShowLeader] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -103,6 +107,25 @@ export default function AdminPage() {
     URL.revokeObjectURL(url)
   }
 
+  async function createAccount(e: React.FormEvent) {
+    e.preventDefault()
+    setCreating(true); setMsg('')
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ display_name: newName, email: newEmail, password: newPassword }),
+    })
+    const json = await res.json()
+    if (!res.ok) { setMsg(`⚠ ${json.error}`); setCreating(false); return }
+    setMsg(`✓ Account created for ${newName}.`)
+    setNewName(''); setNewEmail(''); setNewPassword('')
+    // refresh profiles list
+    const { data: ps } = await supabase.from('profiles').select('*').order('display_name')
+    if (ps) setProfiles(ps)
+    setCreating(false)
+  }
+
   if (!ok) return <div className="page" style={{ paddingTop: '3rem', textAlign: 'center', color: 'var(--gray)' }}>Checking access…</div>
 
   const pot = entries.length * 20
@@ -131,7 +154,7 @@ export default function AdminPage() {
 
       {/* Tabs + lock button */}
       <div style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid var(--green)', marginBottom: 0 }}>
-        {(['entries', 'payments', 'scores'] as const).map(t => (
+        {(['entries', 'payments', 'scores', 'accounts'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '0.55rem 1.1rem', border: 'none', cursor: 'pointer',
             background: tab === t ? 'var(--green)' : 'transparent',
@@ -251,10 +274,37 @@ export default function AdminPage() {
             </button>
           </div>
         )}
+        {/* Accounts tab */}
+        {tab === 'accounts' && (
+          <div style={{ padding: '1.5rem', maxWidth: 420 }}>
+            <p style={{ color: 'var(--gray)', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
+              Create an account on behalf of a player. They can sign in immediately with the password you set.
+            </p>
+            <form onSubmit={createAccount} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div>
+                <label style={labelAdmin}>Name</label>
+                <input className="input" placeholder="e.g. John Smith" value={newName} onChange={e => setNewName(e.target.value)} required />
+              </div>
+              <div>
+                <label style={labelAdmin}>Email</label>
+                <input className="input" type="email" placeholder="player@email.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} required />
+              </div>
+              <div>
+                <label style={labelAdmin}>Temporary Password</label>
+                <input className="input" type="password" placeholder="They can change it later" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} />
+              </div>
+              <button className="btn btn-primary" type="submit" disabled={creating} style={{ padding: '0.7rem 1.5rem' }}>
+                {creating ? 'Creating…' : '➕ Create Account'}
+              </button>
+            </form>
+          </div>
+        )}
+
       </div>
     </div>
   )
 }
 
+const labelAdmin: React.CSSProperties = { display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--gray)', marginBottom: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.04em' }
 const th2: React.CSSProperties = { padding: '0.55rem 0.75rem', textAlign: 'left', fontWeight: 600, fontSize: '0.78rem', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--border)' }
 const td2: React.CSSProperties = { padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)', fontSize: '0.87rem' }
