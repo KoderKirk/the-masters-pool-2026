@@ -47,7 +47,7 @@ export default function PickPage() {
       let { data: profile } = await supabase.from('profiles').select('display_name,payment_method,payment_handle').eq('id', user.id).single()
       if (!profile) {
         const dn = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Player'
-        await supabase.from('profiles').upsert({ id: user.id, display_name: dn, is_admin: false, payment_status: 'pending' }, { onConflict: 'id' })
+        await supabase.from('profiles').upsert({ id: user.id, display_name: dn, payment_status: 'pending' }, { onConflict: 'id' })
         profile = { display_name: dn, payment_method: null, payment_handle: null }
       }
       setDisplayName(profile.display_name)
