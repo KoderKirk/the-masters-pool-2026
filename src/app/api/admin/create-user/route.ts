@@ -2,73 +2,63 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  // Verify caller is an admin using their anon-key session
-  const authHeader = req.headers.get('authorization') ?? ''
-  const token = authHeader.replace('Bearer ', '')
-  if (!token || token === 'undefined') {
-    return NextResponse.json({ error: 'Unauthorized — no session token' }, { status: 401 })
+  try {
+    const authHeader = req.headers.get('authorization') ?? ''
+    const token = authHeader.replace('Bearer ', '')
+    if (!token || token === 'undefined') {
+      return NextResponse.json({ error: 'Unauthorized — no session token' }, { status: 401 })
+    }
+
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    )
+    const { data: { user: caller }, error: callerErr } = await anonClient.auth.getUser()
+    if (!caller) {
+      return NextResponse.json({ error: `Unauthorized — ${callerErr?.message ?? 'invalid token'}` }, { status: 401 })
+    }
+
+    const { data: profile } = await anonClient.from('profiles').select('is_admin').eq('id', caller.id).single()
+    if (!profile?.is_admin) {
+      return NextResponse.json({ error: 'Forbidden — not an admin' }, { status: 403 })
+    }
+
+    const { display_name, email, password } = await req.json()
+    if (!display_name || !email || !password) {
+      return NextResponse.json({ error: 'display_name, email, and password are required' }, { status: 400 })
+    }
+
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!serviceKey) {
+      return NextResponse.json({ error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set' }, { status: 500 })
+    }
+
+    const adminClient = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+
+    const { data, error: authErr } = await adminClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { display_name },
+    })
+    if (authErr) return NextResponse.json({ error: authErr.message }, { status: 400 })
+
+    const { error: profileErr } = await adminClient.from('profiles').upsert({
+      id: data.user.id,
+      display_name,
+      is_admin: false,
+      payment_status: 'pending',
+    }, { onConflict: 'id' })
+    if (profileErr) return NextResponse.json({ error: 'User created but profile failed: ' + profileErr.message }, { status: 500 })
+
+    return NextResponse.json({ ok: true, user_id: data.user.id })
+
+  } catch (err) {
+    console.error('Admin create-user error:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Internal server error' },
+      { status: 500 }
+    )
   }
-
-  const anonClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  )
-  const { data: { user: caller }, error: callerErr } = await anonClient.auth.getUser()
-  if (!caller) {
-    return NextResponse.json({ error: `Unauthorized — ${callerErr?.message ?? 'invalid token'}` }, { status: 401 })
-  }
-
-  const { data: profile } = await anonClient.from('profiles').select('is_admin').eq('id', caller.id).single()
-  if (!profile?.is_admin) return NextResponse.json({ error: 'Forbidden — not an admin' }, { status: 403 })
-
-  const body = await req.json()
-  const { display_name, payment_status, golfer_1_id, golfer_2_id, golfer_3_id, golfer_4_id, total_points_used, is_locked } = body
-
-  if (!display_name || !golfer_1_id || !golfer_2_id || !golfer_3_id || !golfer_4_id) {
-    return NextResponse.json({ error: 'display_name and all 4 golfers are required' }, { status: 400 })
-  }
-
-  const adminClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
-  // Generate a unique placeholder email using a random suffix
-  const rand = Math.random().toString(36).slice(2, 8)
-  const slug = display_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-  const placeholderEmail = `proxy-${slug}-${rand}@masterspool-admin.com`
-
-  const { data: authData, error: authErr } = await adminClient.auth.admin.createUser({
-    email: placeholderEmail,
-    password: Math.random().toString(36) + Math.random().toString(36),
-    email_confirm: true,
-    user_metadata: { display_name },
-  })
-  if (authErr) return NextResponse.json({ error: `Failed to create account: ${authErr.message}` }, { status: 400 })
-
-  const userId = authData.user.id
-
-  const { error: profileErr } = await adminClient.from('profiles').upsert({
-    id: userId,
-    display_name,
-    is_admin: false,
-    payment_status: payment_status ?? 'pending',
-  }, { onConflict: 'id' })
-  if (profileErr) return NextResponse.json({ error: `Profile failed: ${profileErr.message}` }, { status: 500 })
-
-  const { data: entry, error: entryErr } = await adminClient.from('entries').insert({
-    user_id: userId,
-    entry_number: 1,
-    entry_name: display_name,
-    golfer_1_id,
-    golfer_2_id,
-    golfer_3_id,
-    golfer_4_id,
-    total_points_used: total_points_used ?? 0,
-    is_locked: is_locked ?? false,
-  }).select().single()
-  if (entryErr) return NextResponse.json({ error: `Entry failed: ${entryErr.message}` }, { status: 500 })
-
-  return NextResponse.json({ ok: true, user_id: userId, entry_id: entry.id })
 }

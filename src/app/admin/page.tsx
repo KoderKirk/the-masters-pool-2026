@@ -20,8 +20,8 @@ export default function AdminPage() {
   const [msg, setMsg] = useState('')
   const [showLeader, setShowLeader] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newPaid, setNewPaid] = useState(false)
-  const [newGolferIds, setNewGolferIds] = useState(['', '', '', ''])
+  const [newEmail, setNewEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [creating, setCreating] = useState(false)
 
   useEffect(() => {
@@ -112,18 +112,8 @@ export default function AdminPage() {
     URL.revokeObjectURL(url)
   }
 
-  const newTotalPts = newGolferIds.reduce((sum, id) => {
-    const g = golfers.find(g => g.id === id)
-    return sum + (g?.points ?? 0)
-  }, 0)
-  const poolLocked = entries.length > 0 && entries.every(e => e.is_locked)
-
-  async function createEntry(e: React.FormEvent) {
+  async function createAccount(e: React.FormEvent) {
     e.preventDefault()
-    if (poolLocked) { setMsg('⚠ Entries are locked. Use "Unlock All" before adding new entries.'); return }
-    if (newGolferIds.some(id => !id)) { setMsg('⚠ Select all 4 golfers.'); return }
-    if (new Set(newGolferIds).size !== 4) { setMsg('⚠ Each golfer must be different.'); return }
-    if (newTotalPts > 50) { setMsg('⚠ Total points exceed 50.'); return }
     setCreating(true); setMsg('')
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -131,27 +121,15 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({
-          display_name: newName,
-          payment_status: newPaid ? 'paid' : 'pending',
-          golfer_1_id: newGolferIds[0],
-          golfer_2_id: newGolferIds[1],
-          golfer_3_id: newGolferIds[2],
-          golfer_4_id: newGolferIds[3],
-          total_points_used: newTotalPts,
-          is_locked: false,
-        }),
+        body: JSON.stringify({ display_name: newName, email: newEmail, password: newPassword }),
       })
-      const json = await res.json()
-      if (!res.ok) { setMsg(`⚠ ${json.error}`); return }
-      setMsg(`✓ Entry added for ${newName}.`)
-      setNewName(''); setNewPaid(false); setNewGolferIds(['', '', '', ''])
-      const [{ data: ps }, { data: es }] = await Promise.all([
-        supabase.from('profiles').select('*').order('display_name'),
-        supabase.from('entries').select('*').order('created_at'),
-      ])
+      let json: { ok?: boolean; error?: string } = {}
+      try { json = await res.json() } catch { /* empty body */ }
+      if (!res.ok) { setMsg(`⚠ ${json.error ?? `Server error (${res.status})`}`); return }
+      setMsg(`Account created for ${newName}.`)
+      setNewName(''); setNewEmail(''); setNewPassword('')
+      const { data: ps } = await supabase.from('profiles').select('*').order('display_name')
       if (ps) setProfiles(ps)
-      if (es) setEntries(es)
     } catch (err) {
       setMsg(`⚠ Unexpected error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
@@ -324,64 +302,25 @@ export default function AdminPage() {
         )}
         {/* Accounts tab */}
         {tab === 'accounts' && (
-          <div style={{ padding: '1.5rem', maxWidth: 460 }}>
+          <div style={{ padding: '1.5rem', maxWidth: 420 }}>
             <p style={{ color: 'var(--gray)', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
-              Add an entry on behalf of a player who can't use the app.
+              Create an account on behalf of a player. They can sign in immediately with the credentials you set.
             </p>
-            <form onSubmit={createEntry} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <form onSubmit={createAccount} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div>
-                <label style={labelAdmin}>Player Name</label>
+                <label style={labelAdmin}>Name</label>
                 <input className="input" placeholder="e.g. John Smith" value={newName} onChange={e => setNewName(e.target.value)} required />
               </div>
-
               <div>
-                <label style={labelAdmin}>Golfers <span style={{ color: newTotalPts > 50 ? 'var(--red)' : 'var(--green)', fontWeight: 700 }}>({newTotalPts} / 50 pts)</span></label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  {[0, 1, 2, 3].map(i => (
-                    <select
-                      key={i}
-                      className="input"
-                      value={newGolferIds[i]}
-                      onChange={e => setNewGolferIds(prev => { const next = [...prev]; next[i] = e.target.value; return next })}
-                      style={{ fontSize: '0.88rem' }}
-                    >
-                      <option value="">— Pick #{i + 1} —</option>
-                      {golfers.map(g => (
-                        <option
-                          key={g.id}
-                          value={g.id}
-                          disabled={newGolferIds.some((id, j) => id === g.id && j !== i)}
-                        >
-                          {g.name} ({g.points}pt)
-                        </option>
-                      ))}
-                    </select>
-                  ))}
-                </div>
+                <label style={labelAdmin}>Email</label>
+                <input className="input" type="email" placeholder="player@email.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} required />
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <label style={labelAdmin}>Payment</label>
-                <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 5, overflow: 'hidden' }}>
-                  {(['pending', 'paid'] as const).map(s => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setNewPaid(s === 'paid')}
-                      style={{
-                        padding: '0.35rem 0.9rem', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
-                        background: (s === 'paid') === newPaid ? 'var(--green)' : 'transparent',
-                        color: (s === 'paid') === newPaid ? '#fff' : 'var(--gray)',
-                      }}
-                    >
-                      {s === 'paid' ? '✓ Paid' : 'Pending'}
-                    </button>
-                  ))}
-                </div>
+              <div>
+                <label style={labelAdmin}>Temporary Password</label>
+                <input className="input" type="password" placeholder="Min 6 characters" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} />
               </div>
-
-              <button className="btn btn-primary" type="submit" disabled={creating || !newName.trim() || newTotalPts > 50} style={{ padding: '0.7rem 1.5rem', marginTop: '0.25rem' }}>
-                {creating ? 'Saving…' : '➕ Add Entry'}
+              <button className="btn btn-primary" type="submit" disabled={creating || !newName.trim()} style={{ padding: '0.7rem 1.5rem' }}>
+                {creating ? 'Creating…' : '➕ Create Account'}
               </button>
             </form>
           </div>
