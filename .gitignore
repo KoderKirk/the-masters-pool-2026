@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# env files — never commit secrets
+.env.local
+.env.*.local
+.env
+
+# Next.js build output
+.next/
+out/
+
+# misc
+.DS_Store
+*.pem
