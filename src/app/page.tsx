@@ -22,6 +22,7 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([])
   const [totalEntries, setTotalEntries] = useState(0)
   const [showLeader, setShowLeader] = useState(false)
+  const [favorites, setFavorites] = useState<string[]>([])
 
   // Join/login form state
   const [mode, setMode] = useState<'join' | 'login'>('join')
@@ -43,7 +44,7 @@ export default function HomePage() {
         const [{ data: profile }, { data: gs }, { data: lb }, { count }, { data: settings }] = await Promise.all([
           supabase.from('profiles').select('display_name,payment_status').eq('id', user.id).single(),
           supabase.from('golfers').select('name,current_score,position,made_cut').order('current_score', { ascending: true }).limit(10),
-          supabase.from('entry_leaderboard').select('*').order('place').limit(25),
+          supabase.from('entry_leaderboard').select('*').order('place'),
           supabase.from('entries').select('*', { count: 'exact', head: true }),
           supabase.from('pool_settings').select('value').eq('key', 'show_leader').single(),
         ])
@@ -52,6 +53,8 @@ export default function HomePage() {
         if (lb) setLeaderboard(lb)
         if (count) setTotalEntries(count)
         if (settings) setShowLeader(!!settings.value)
+        const stored = localStorage.getItem('masters_favorites')
+        if (stored) setFavorites(JSON.parse(stored))
       } else {
         setAuthed(false)
         const { data: locked } = await supabase.from('entries').select('id').eq('is_locked', true).limit(1)
@@ -172,6 +175,49 @@ export default function HomePage() {
                 Please send $20 per entry · <strong>Venmo @KirkOliver</strong> or <strong>PayPal kirko005@gmail.com</strong>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Favorite Entries */}
+        {favorites.length > 0 && leaderboard.some(r => favorites.includes(r.entry_id)) && (
+          <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.25rem', border: '2px solid var(--gold)' }}>
+            <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '1rem' }}>★</span>
+              <h3 style={{ fontSize: '0.9rem', color: '#fff', margin: 0 }}>Favorite Entries</h3>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.87rem' }}>
+              <thead>
+                <tr style={{ background: 'var(--cream)' }}>
+                  <th style={th}>Pos</th>
+                  <th style={{ ...th, textAlign: 'left' }}>Entry</th>
+                  <th style={th}>Score</th>
+                  <th style={{ ...th, textAlign: 'left', fontSize: '0.75rem' }}>Team</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.filter(r => favorites.includes(r.entry_id)).map((row, i) => (
+                  <tr key={row.entry_id} style={{ background: row.is_disqualified ? '#fff8f8' : i % 2 === 0 ? '#fffdf4' : '#fff9e6' }}>
+                    <td style={{ ...td, textAlign: 'center' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 26, height: 26, borderRadius: '50%', fontSize: '0.78rem', fontWeight: 700,
+                        background: row.is_disqualified ? '#fdeaea' : row.place === 1 ? 'var(--gold)' : row.place === 2 ? '#C0C0C0' : row.place === 3 ? '#CD7F32' : 'var(--cream-dark)',
+                        color: row.is_disqualified ? 'var(--red)' : row.place <= 3 ? '#fff' : 'var(--gray)',
+                      }}>
+                        {row.is_disqualified ? 'DQ' : row.place}
+                      </span>
+                    </td>
+                    <td style={{ ...td, fontWeight: row.place === 1 ? 700 : 400 }}>{row.entry_name}</td>
+                    <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: (row.team_score ?? 0) < 0 ? 'var(--red)' : (row.team_score ?? 0) === 0 ? 'var(--dark)' : '#3a6ea5' }}>
+                      {formatScore(row.team_score)}
+                    </td>
+                    <td style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
+                      {[row.golfer_1, row.golfer_2, row.golfer_3, row.golfer_4].map(n => n?.split(' ').pop()).join(', ')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
@@ -346,7 +392,7 @@ export default function HomePage() {
           <li>Need <strong>≥ 3 players to make the cut</strong> or you're DQ'd</li>
           <li>Lowest team score wins · Tiebreaker: had the winner?</li>
           <li>Entries lock <strong>Thursday 5am PT</strong> · No exceptions</li>
-          <li>Pay <strong>$20/entry</strong> via Venmo or PayPal (details provided after sign-up)</li>
+          <li>Pay <strong>$20/entry</strong> · payment info in the footer after sign-up</li>
         </ol>
       </div>
 

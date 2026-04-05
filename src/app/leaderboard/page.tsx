@@ -18,6 +18,21 @@ export default function LeaderboardPage() {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [poolLocked, setPoolLocked] = useState(false)
   const [search, setSearch] = useState('')
+  const [favorites, setFavorites] = useState<string[]>([])
+
+  useEffect(() => {
+    const stored = localStorage.getItem('masters_favorites')
+    if (stored) setFavorites(JSON.parse(stored))
+  }, [])
+
+  function toggleFavorite(e: React.MouseEvent, id: string) {
+    e.stopPropagation()
+    setFavorites(prev => {
+      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+      localStorage.setItem('masters_favorites', JSON.stringify(next))
+      return next
+    })
+  }
 
   async function loadData() {
     const [{ data }, { data: locked }] = await Promise.all([
@@ -84,12 +99,77 @@ export default function LeaderboardPage() {
         style={{ marginBottom: '0.75rem', maxWidth: 340 }}
       />
 
+      {/* Favorites section */}
+      {favorites.length > 0 && rows.some(r => favorites.includes(r.entry_id)) && (
+        <div style={{ marginBottom: '1.25rem', background: 'var(--white)', border: '2px solid var(--gold)', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--gold)', padding: '0.5rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ fontSize: '1rem' }}>★</span>
+            <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Favorites</span>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+            <tbody>
+              {rows.filter(r => favorites.includes(r.entry_id)).map((row, i) => {
+                const golfers = [
+                  { name: row.golfer_1, score: row.score_1, cut: row.cut_1 },
+                  { name: row.golfer_2, score: row.score_2, cut: row.cut_2 },
+                  { name: row.golfer_3, score: row.score_3, cut: row.cut_3 },
+                  { name: row.golfer_4, score: row.score_4, cut: row.cut_4 },
+                ]
+                const scoreColor = row.team_score < 0 ? 'var(--red)' : row.team_score === 0 ? 'var(--dark)' : '#3a6ea5'
+                const isExp = expanded === `fav-${row.entry_id}`
+                return (
+                  <>
+                    <tr key={row.entry_id} onClick={() => setExpanded(isExp ? null : `fav-${row.entry_id}`)} style={{ background: i % 2 === 0 ? '#fffdf4' : '#fff9e6', cursor: 'pointer' }}>
+                      <td style={{ ...td, textAlign: 'center', width: 52 }}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          width: 30, height: 30, borderRadius: '50%', fontSize: '0.82rem', fontWeight: 700,
+                          background: row.is_disqualified ? '#fdeaea' : row.place === 1 ? 'var(--gold)' : row.place === 2 ? '#C0C0C0' : row.place === 3 ? '#CD7F32' : 'var(--cream-dark)',
+                          color: row.is_disqualified ? 'var(--red)' : row.place <= 3 ? '#fff' : 'var(--gray)',
+                        }}>{row.is_disqualified ? 'DQ' : row.place}</span>
+                      </td>
+                      <td style={{ ...td, fontWeight: row.place === 1 ? 700 : 400 }}>{row.entry_name}</td>
+                      <td style={{ ...td, textAlign: 'center', width: 36 }}>
+                        <button onClick={e => toggleFavorite(e, row.entry_id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'var(--gold)', lineHeight: 1 }}>★</button>
+                      </td>
+                      <td style={{ ...td, textAlign: 'center', color: 'var(--gray)', fontSize: '0.82rem' }}>{row.total_points_used}pt</td>
+                      <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: scoreColor }}>{formatScore(row.team_score)}</td>
+                      <td style={{ ...td, fontSize: '0.8rem', color: 'var(--gray)' }}>
+                        {golfers.map((g, idx) => (
+                          <span key={idx} style={{ marginRight: 8 }}>{g.name?.split(' ').pop()}<span style={{ color: '#bbb', marginLeft: 2 }}>({formatScore(g.score)})</span></span>
+                        ))}
+                      </td>
+                    </tr>
+                    {isExp && (
+                      <tr key={`fav-${row.entry_id}-exp`}>
+                        <td colSpan={6} style={{ padding: '1rem 1.25rem', background: '#fffbec', borderBottom: '1px solid var(--border)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                            {golfers.map((g, idx) => (
+                              <div key={idx} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0.75rem', textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.85rem', marginBottom: 4, fontWeight: 600 }}>{g.name}</div>
+                                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: (g.score ?? 0) < 0 ? 'var(--red)' : 'var(--dark)' }}>{formatScore(g.score)}</div>
+                                {g.cut !== null && <div style={{ fontSize: '0.72rem', marginTop: 3, color: g.cut ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>{g.cut ? '✓ Made cut' : '✗ Missed cut'}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div style={{ background: 'var(--white)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
           <thead>
             <tr style={{ background: 'var(--green)', color: '#fff' }}>
               <th style={{ ...th, textAlign: 'center', width: 52 }}>Pos</th>
               <th style={th}>Entry</th>
+              <th style={{ ...th, textAlign: 'center', width: 36 }}></th>
               <th style={{ ...th, textAlign: 'center' }}>Budget</th>
               <th style={{ ...th, textAlign: 'center' }}>Score</th>
               <th style={{ ...th, fontSize: '0.78rem' }}>Team</th>
@@ -136,6 +216,11 @@ export default function LeaderboardPage() {
                       {row.entry_name}
                       {row.is_disqualified && <span style={{ marginLeft: 8, fontSize: '0.75rem', color: 'var(--red)', fontStyle: 'italic' }}>(DQ)</span>}
                     </td>
+                    <td style={{ ...td, textAlign: 'center', width: 36 }}>
+                      <button onClick={e => toggleFavorite(e, row.entry_id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1, color: favorites.includes(row.entry_id) ? 'var(--gold)' : '#ccc' }}>
+                        {favorites.includes(row.entry_id) ? '★' : '☆'}
+                      </button>
+                    </td>
                     <td style={{ ...td, textAlign: 'center', color: 'var(--gray)', fontSize: '0.82rem' }}>{row.total_points_used}pt</td>
                     <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: scoreColor }}>{formatScore(row.team_score)}</td>
                     <td style={{ ...td, fontSize: '0.8rem', color: 'var(--gray)' }}>
@@ -149,7 +234,7 @@ export default function LeaderboardPage() {
                   </tr>
                   {isExp && (
                     <tr key={`${row.entry_id}-exp`}>
-                      <td colSpan={5} style={{ padding: '1rem 1.25rem', background: '#f4fbf7', borderBottom: '1px solid var(--border)' }}>
+                      <td colSpan={6} style={{ padding: '1rem 1.25rem', background: '#f4fbf7', borderBottom: '1px solid var(--border)' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
                           {golfers.map((g, idx) => (
                             <div key={idx} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0.75rem', textAlign: 'center' }}>
