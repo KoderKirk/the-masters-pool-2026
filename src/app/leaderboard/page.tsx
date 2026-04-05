@@ -17,6 +17,7 @@ export default function LeaderboardPage() {
   const [updated, setUpdated] = useState<Date | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [poolLocked, setPoolLocked] = useState(false)
+  const [search, setSearch] = useState('')
 
   async function loadData() {
     const [{ data }, { data: locked }] = await Promise.all([
@@ -44,6 +45,16 @@ export default function LeaderboardPage() {
     return () => { supabase.removeChannel(ch) }
   }, [])
 
+  const filteredRows = search.trim()
+    ? rows.filter(r => {
+        const q = search.toLowerCase()
+        return (
+          r.entry_name.toLowerCase().includes(q) ||
+          [r.golfer_1, r.golfer_2, r.golfer_3, r.golfer_4].some(n => n?.toLowerCase().includes(q))
+        )
+      })
+    : rows
+
   if (loading) return <div className="page" style={{ paddingTop: '3rem', textAlign: 'center', color: 'var(--gray)' }}>Loading leaderboard…</div>
 
   return (
@@ -53,7 +64,7 @@ export default function LeaderboardPage() {
           <h1 style={{ color: 'var(--green)', marginBottom: '0.2rem' }}>🏆 Leaderboard</h1>
           <p style={{ color: 'var(--gray)', fontSize: '0.88rem' }}>
             Masters Pool 2026 · {rows.length} entries
-            {!poolLocked && <span style={{ marginLeft: 8, fontStyle: 'italic' }}>(alphabetical — rankings revealed at tee time)</span>}
+            {!poolLocked && <span style={{ marginLeft: 8, fontStyle: 'italic' }}>(alphabetical — rankings revealed after tee time)</span>}
           </p>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -64,6 +75,14 @@ export default function LeaderboardPage() {
           {updated && <div style={{ fontSize: '0.73rem', color: 'var(--gray)', marginTop: 3 }}>Updated {updated.toLocaleTimeString()}</div>}
         </div>
       </div>
+
+      <input
+        className="input"
+        placeholder="🔍  Search entries or player names…"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{ marginBottom: '0.75rem', maxWidth: 340 }}
+      />
 
       <div style={{ background: 'var(--white)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
@@ -77,7 +96,7 @@ export default function LeaderboardPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => {
+            {filteredRows.map((row, i) => {
               const isExp = expanded === row.entry_id
               const golfers = [
                 { name: row.golfer_1, score: row.score_1, cut: row.cut_1 },

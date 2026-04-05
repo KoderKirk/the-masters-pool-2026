@@ -59,6 +59,11 @@ export default function AdminPage() {
     setProfiles(prev => prev.map(p => p.id === id ? { ...p, payment_status: 'paid' } : p))
   }
 
+  async function markUnpaid(id: string) {
+    await supabase.from('profiles').update({ payment_status: 'pending' }).eq('id', id)
+    setProfiles(prev => prev.map(p => p.id === id ? { ...p, payment_status: 'pending' } : p))
+  }
+
   async function saveScores() {
     setSaving(true); setMsg('')
     for (const g of golfers) {
@@ -246,11 +251,10 @@ export default function AdminPage() {
                       <span className={`tag ${paid ? 'tag-green' : 'tag-gold'}`}>{p.payment_status}</span>
                     </td>
                     <td style={td2}>
-                      {!paid && (
-                        <button className="btn btn-primary" onClick={() => markPaid(p.id)} style={{ padding: '3px 10px', fontSize: '0.8rem' }}>
-                          Mark Paid
-                        </button>
-                      )}
+                      {paid
+                        ? <button className="btn btn-ghost" onClick={() => markUnpaid(p.id)} style={{ padding: '3px 10px', fontSize: '0.8rem', color: 'var(--red)', borderColor: 'var(--red)' }}>Undo</button>
+                        : <button className="btn btn-primary" onClick={() => markPaid(p.id)} style={{ padding: '3px 10px', fontSize: '0.8rem' }}>Mark Paid</button>
+                      }
                     </td>
                   </tr>
                 )
@@ -282,8 +286,8 @@ export default function AdminPage() {
                     style={{ padding: '2px 4px', border: '1px solid var(--border)', borderRadius: 4, fontSize: '0.75rem' }}
                   >
                     <option value="tbd">TBD</option>
-                    <option value="yes">Cut ✓</option>
-                    <option value="no">MC ✗</option>
+                    <option value="yes">MC ✓</option>
+                    <option value="no">Cut ✗</option>
                   </select>
                 </div>
               ))}
