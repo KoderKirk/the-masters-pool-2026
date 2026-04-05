@@ -103,8 +103,8 @@ export default function HomePage() {
   // ─── LOGGED-IN DASHBOARD ───────────────────────────────────────────
   if (authed) {
     const purse = totalEntries * 20
-    const first = Math.round(purse * 0.70)
-    const second = Math.round(purse * 0.20)
+    const first = Math.round(purse * 0.65)
+    const second = Math.round(purse * 0.25)
     const third = Math.round(purse * 0.10)
 
     const leaderLabel = (place: number) => {
@@ -140,8 +140,8 @@ export default function HomePage() {
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
               {[
-                { place: '1st', placeNum: 1, pct: '70%', amt: first, color: 'var(--gold)' },
-                { place: '2nd', placeNum: 2, pct: '20%', amt: second, color: '#C0C0C0' },
+                { place: '1st', placeNum: 1, pct: '65%', amt: first, color: 'var(--gold)' },
+                { place: '2nd', placeNum: 2, pct: '25%', amt: second, color: '#C0C0C0' },
                 { place: '3rd', placeNum: 3, pct: '10%', amt: third, color: '#CD7F32' },
               ].map(p => (
                 <div key={p.place} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.75rem 1.1rem', minWidth: 110 }}>

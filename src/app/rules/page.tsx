@@ -28,8 +28,8 @@ export default function RulesPage() {
       <div className="card" style={{ marginBottom: '1.25rem' }}>
         <h2 style={{ fontSize: '1rem', color: 'var(--green)', marginBottom: '0.85rem' }}>Payouts</h2>
         <ol style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 2.1, fontSize: '0.95rem' }}>
-          <li><strong>1st place</strong> — 70% of the pot</li>
-          <li><strong>2nd place</strong> — 20% of the pot</li>
+          <li><strong>1st place</strong> — 65% of the pot</li>
+          <li><strong>2nd place</strong> — 25% of the pot</li>
           <li><strong>3rd place</strong> — 10% of the pot</li>
         </ol>
       </div>
