@@ -126,6 +126,21 @@ export default function PickPage() {
     setSelected([])
   }
 
+  async function deleteEntry(entry: SavedEntry) {
+    if (!window.confirm(`Delete "${entry.entry_name}"? This cannot be undone.`)) return
+    const { error } = await supabase.from('entries').delete().eq('id', entry.id)
+    if (error) { setError(error.message); return }
+    const updated = savedEntries.filter(e => e.id !== entry.id)
+    setSavedEntries(updated)
+    // Reset form if the deleted entry was being edited
+    if (editingNum === entry.entry_number) {
+      setSelected([]); setEditingNum(null)
+      const next = [1, 2, 3].find(n => !updated.map(e => e.entry_number).includes(n)) ?? 1
+      setEntryNum(next); setEntryName(`${displayName} #${next}`)
+    }
+    setSuccess(`Entry deleted.`)
+  }
+
   async function savePaymentInfo() {
     if (!userId || !paymentMethod || !paymentHandle.trim()) return
     await supabase.from('profiles').update({ payment_method: paymentMethod, payment_handle: paymentHandle.trim() }).eq('id', userId)
@@ -255,12 +270,20 @@ export default function PickPage() {
                       </div>
                     ))}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '0.8rem', color: 'var(--gray)' }}>{entry.total_points_used}pt used</span>
                     {isEditing
                       ? <span style={{ fontSize: '0.8rem', color: 'var(--green)', fontWeight: 600 }}>Editing…</span>
                       : <button onClick={() => loadEntryForEdit(entry)} className="btn btn-ghost" style={{ padding: '0.25rem 0.8rem', fontSize: '0.8rem' }}>Edit</button>
                     }
+                    {!poolLocked && !isEditing && (
+                      <button
+                        onClick={() => deleteEntry(entry)}
+                        style={{ padding: '0.25rem 0.7rem', fontSize: '0.8rem', background: 'none', border: '1px solid var(--red)', color: 'var(--red)', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               )
