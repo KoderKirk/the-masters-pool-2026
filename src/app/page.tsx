@@ -221,6 +221,19 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* Quick Rules */}
+        <div className="card" style={{ marginBottom: '1.25rem' }}>
+          <h3 style={{ color: 'var(--green)', marginBottom: '0.75rem', fontSize: '1rem' }}>📋 Quick Rules</h3>
+          <ol style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 2, fontSize: '0.9rem' }}>
+            <li>Pick <strong>4 golfers</strong> · combined points <strong>≤ 50</strong></li>
+            <li>Best <strong>3 of 4</strong> scores count — worst is dropped</li>
+            <li>Need <strong>≥ 3 players to make the cut</strong> or you're DQ'd</li>
+            <li>Lowest team score wins · Tiebreaker: had the winner?</li>
+            <li>Entries lock <strong>Thursday 5am PT</strong> · No exceptions</li>
+            <li>Pay <strong>$20/entry</strong> · Venmo @KirkOliver · PayPal kirko005@gmail.com (Friends &amp; Family)</li>
+          </ol>
+        </div>
+
         {/* Two-column: Golfers + Leaderboard */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '1.25rem', alignItems: 'start' }}>
 
