@@ -34,13 +34,22 @@ export default function RulesPage() {
         </ol>
       </div>
 
-      <div className="card">
+      <div className="card" style={{ marginBottom: '1.25rem' }}>
         <h2 style={{ fontSize: '1rem', color: 'var(--green)', marginBottom: '0.85rem' }}>Payment</h2>
         <ul style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 2.1, fontSize: '0.95rem' }}>
           <li>Send <strong>$20 per entry</strong> to Kirk before the Thursday deadline</li>
           <li><strong>Venmo:</strong> @KirkOliver</li>
           <li><strong>PayPal:</strong> kirko005@gmail.com (Friends &amp; Family)</li>
           <li>Enter your Venmo handle or PayPal email on the My Picks page so we can match your payment</li>
+        </ul>
+      </div>
+
+      <div className="card">
+        <h2 style={{ fontSize: '1rem', color: 'var(--green)', marginBottom: '0.85rem' }}>Updates</h2>
+        <ul style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 2.1, fontSize: '0.95rem' }}>
+          <li>Check this site throughout the weekend</li>
+          <li>Player scores will be updated at the end of each day's rounds</li>
+          <li>Email commentary will be emailed out as in previous years</li>
         </ul>
       </div>
     </div>
