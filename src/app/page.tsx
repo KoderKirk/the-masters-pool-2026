@@ -43,7 +43,7 @@ export default function HomePage() {
         setAuthed(true)
         const [{ data: profile }, { data: gs }, { data: lb }, { count }, { data: settings }] = await Promise.all([
           supabase.from('profiles').select('display_name,payment_status').eq('id', user.id).single(),
-          supabase.from('golfers').select('name,current_score,position,made_cut').order('current_score', { ascending: true }).limit(10),
+          supabase.from('golfers').select('name,current_score,position,made_cut').order('current_score', { ascending: true }),
           supabase.from('entry_leaderboard').select('*').order('place'),
           supabase.from('entries').select('*', { count: 'exact', head: true }),
           supabase.from('pool_settings').select('value').eq('key', 'show_leader').single(),
@@ -240,7 +240,7 @@ export default function HomePage() {
           {/* Top 10 Golfers */}
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--cream-dark)' }}>
-              <h3 style={{ fontSize: '0.9rem', color: 'var(--green)', margin: 0 }}>🏌️ Top 10 Golfers</h3>
+              <h3 style={{ fontSize: '0.9rem', color: 'var(--green)', margin: 0 }}>🏌️ Golfer Scoreboard</h3>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.87rem' }}>
               <thead>
