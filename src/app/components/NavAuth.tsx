@@ -31,6 +31,7 @@ export default function NavAuth() {
       {authed && <a href="/" style={linkStyle}>Dashboard</a>}
       {authed && <a href="/leaderboard" style={linkStyle}>Leaderboard</a>}
       {authed && <a href="/pick" style={linkStyle}>My Picks</a>}
+      <a href="/rules" style={linkStyle}>Rules</a>
       {authed && isAdmin && <a href="/admin" style={linkStyle}>Admin</a>}
       {authed && (
         <button

@@ -294,24 +294,33 @@ export default function PickPage() {
         </div>
       )}
 
-      {/* Payment info — only shown when unpaid */}
-      {paymentStatus !== 'paid' && (
-        <div className="card" style={{ marginBottom: '1.75rem', display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap', border: '2px solid var(--gold)' }}>
-          <div style={{ flex: '0 0 auto' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--green)', marginBottom: '0.2rem' }}>💳 Payment Info</div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--gray)', maxWidth: 220 }}>
+      {/* Quick Rules + Payment Info — side by side */}
+      <div style={{ display: 'grid', gridTemplateColumns: paymentStatus !== 'paid' ? '1fr 1fr' : '1fr', gap: '1rem', marginBottom: '1.75rem' }}>
+        <div className="card" style={{ padding: '1rem 1.25rem' }}>
+          <h3 style={{ color: 'var(--green)', marginBottom: '0.6rem', fontSize: '0.95rem' }}>📋 Quick Rules</h3>
+          <ol style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 1.9, fontSize: '0.85rem', margin: 0 }}>
+            <li>Pick <strong>4 golfers</strong> · combined points <strong>≤ 50</strong></li>
+            <li>Best <strong>3 of 4</strong> scores count — worst dropped</li>
+            <li>Need <strong>≥ 3 to make the cut</strong> or entry is DQ'd</li>
+            <li>Lowest team score wins · Tiebreaker: had the winner?</li>
+            <li>Entries lock <strong>Thursday 5am PT</strong></li>
+          </ol>
+        </div>
+
+        {paymentStatus !== 'paid' && (
+          <div className="card" style={{ padding: '1rem 1.25rem', border: '2px solid var(--gold)' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--green)', marginBottom: '0.5rem' }}>💳 Payment Info</div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--gray)', marginBottom: '0.65rem' }}>
               Send $20/entry to Kirk, then enter your handle so we can match your payment.
             </div>
-          </div>
-          <div style={{ flex: 1, minWidth: 260, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 5, overflow: 'hidden', width: 'fit-content' }}>
+            <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 5, overflow: 'hidden', width: 'fit-content', marginBottom: '0.5rem' }}>
               {(['venmo', 'paypal'] as const).map(m => (
                 <button
                   key={m}
                   type="button"
                   onClick={() => { setPaymentMethod(m); setPaymentSaved(false) }}
                   style={{
-                    padding: '0.4rem 1.1rem', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
+                    padding: '0.35rem 1rem', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
                     background: paymentMethod === m ? 'var(--green)' : 'transparent',
                     color: paymentMethod === m ? '#fff' : 'var(--gray)',
                   }}
@@ -328,22 +337,22 @@ export default function PickPage() {
                   value={paymentHandle}
                   onChange={e => { setPaymentHandle(e.target.value); setPaymentSaved(false) }}
                   onBlur={savePaymentInfo}
-                  style={{ fontSize: '0.88rem', maxWidth: 260 }}
+                  style={{ fontSize: '0.85rem' }}
                 />
                 <button
                   type="button"
                   onClick={savePaymentInfo}
                   disabled={!paymentHandle.trim()}
                   className="btn btn-ghost"
-                  style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+                  style={{ padding: '0.35rem 0.8rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
                 >
                   {paymentSaved ? '✓ Saved' : 'Save'}
                 </button>
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
 
@@ -487,19 +496,6 @@ export default function PickPage() {
           </a>
         </div>
 
-      </div>
-
-      {/* Quick Rules */}
-      <div className="card" style={{ marginTop: '1.5rem' }}>
-        <h3 style={{ color: 'var(--green)', marginBottom: '0.75rem', fontSize: '1rem' }}>📋 Quick Rules</h3>
-        <ol style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 2, fontSize: '0.9rem' }}>
-          <li>Pick <strong>4 golfers</strong> · combined points <strong>≤ 50</strong></li>
-          <li>Best <strong>3 of 4</strong> scores count — worst is dropped</li>
-          <li>Need <strong>≥ 3 players to make the cut</strong> or you're DQ'd</li>
-          <li>Lowest team score wins · Tiebreaker: had the winner?</li>
-          <li>Entries lock <strong>Thursday 5am PT</strong> · No exceptions</li>
-          <li>Pay <strong>$20/entry</strong> · Venmo @KirkOliver · PayPal kirko005@gmail.com (Friends &amp; Family)</li>
-        </ol>
       </div>
 
     </div>
