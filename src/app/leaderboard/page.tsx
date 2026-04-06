@@ -19,10 +19,12 @@ export default function LeaderboardPage() {
   const [poolLocked, setPoolLocked] = useState(false)
   const [search, setSearch] = useState('')
   const [favorites, setFavorites] = useState<string[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem('masters_favorites')
     if (stored) setFavorites(JSON.parse(stored))
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id ?? null))
   }, [])
 
   function toggleFavorite(e: React.MouseEvent, id: string) {
@@ -136,9 +138,11 @@ export default function LeaderboardPage() {
                       <td style={{ ...td, textAlign: 'center', color: 'var(--gray)', fontSize: '0.82rem' }}>{row.total_points_used}pt</td>
                       <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: scoreColor }}>{formatScore(row.team_score)}</td>
                       <td style={{ ...td, fontSize: '0.8rem', color: 'var(--gray)' }}>
-                        {golfers.map((g, idx) => (
-                          <span key={idx} style={{ marginRight: 8 }}>{g.name?.split(' ').pop()}<span style={{ color: '#bbb', marginLeft: 2 }}>({formatScore(g.score)})</span></span>
-                        ))}
+                        <span style={!poolLocked && row.user_id !== currentUserId ? { filter: 'blur(5px)', userSelect: 'none', display: 'inline-block' } : {}}>
+                          {golfers.map((g, idx) => (
+                            <span key={idx} style={{ marginRight: 8 }}>{g.name?.split(' ').pop()}<span style={{ color: '#bbb', marginLeft: 2 }}>({formatScore(g.score)})</span></span>
+                          ))}
+                        </span>
                       </td>
                     </tr>
                     {isExp && (
@@ -227,12 +231,14 @@ export default function LeaderboardPage() {
                     <td className="mobile-hide" style={{ ...td, textAlign: 'center', color: 'var(--gray)', fontSize: '0.82rem' }}>{row.total_points_used}pt</td>
                     <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: scoreColor }}>{formatScore(row.team_score)}</td>
                     <td className="mobile-hide" style={{ ...td, fontSize: '0.8rem', color: 'var(--gray)' }}>
+                      <span style={!poolLocked && row.user_id !== currentUserId ? { filter: 'blur(5px)', userSelect: 'none', display: 'inline-block' } : {}}>
                       {golfers.map((g, idx) => (
                         <span key={idx} style={{ marginRight: 8 }}>
                           {g.name?.split(' ').pop()}
                           <span style={{ color: '#bbb', marginLeft: 2 }}>({formatScore(g.score)})</span>
                         </span>
                       ))}
+                      </span>
                     </td>
                   </tr>
                   {isExp && (

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 type Golfer = { name: string; current_score: number; position: string | null; made_cut: boolean | null }
 type LeaderboardRow = {
   entry_id: string; entry_name: string; place: number; team_score: number
-  is_disqualified: boolean; total_points_used: number
+  is_disqualified: boolean; total_points_used: number; user_id: string
   golfer_1: string; score_1: number
   golfer_2: string; score_2: number
   golfer_3: string; score_3: number
@@ -23,6 +23,8 @@ export default function HomePage() {
   const [totalEntries, setTotalEntries] = useState(0)
   const [showLeader, setShowLeader] = useState(false)
   const [favorites, setFavorites] = useState<string[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+  const [poolLocked, setPoolLocked] = useState(false)
 
   // Join/login form state
   const [mode, setMode] = useState<'join' | 'login'>('join')
@@ -41,18 +43,21 @@ export default function HomePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setAuthed(true)
-        const [{ data: profile }, { data: gs }, { data: lb }, { count }, { data: settings }] = await Promise.all([
+        setUserId(user.id)
+        const [{ data: profile }, { data: gs }, { data: lb }, { count }, { data: settings }, { data: locked }] = await Promise.all([
           supabase.from('profiles').select('display_name,payment_status').eq('id', user.id).single(),
           supabase.from('golfers').select('name,current_score,position,made_cut').order('current_score', { ascending: true }),
           supabase.from('entry_leaderboard').select('*').order('place'),
           supabase.from('entries').select('*', { count: 'exact', head: true }),
           supabase.from('pool_settings').select('value').eq('key', 'show_leader').single(),
+          supabase.from('entries').select('id').eq('is_locked', true).limit(1),
         ])
         if (profile) { setDisplayName(profile.display_name); setPaymentStatus(profile.payment_status ?? 'pending') }
         if (gs) setGolfers(gs)
         if (lb) setLeaderboard(lb)
         if (count) setTotalEntries(count)
         if (settings) setShowLeader(!!settings.value)
+        if (locked && locked.length > 0) setPoolLocked(true)
         const stored = localStorage.getItem('masters_favorites')
         if (stored) setFavorites(JSON.parse(stored))
       } else {
@@ -213,16 +218,18 @@ export default function HomePage() {
                       {formatScore(row.team_score)}
                     </td>
                     <td className="mobile-hide" style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
-                      {[
-                        { name: row.golfer_1, score: row.score_1 },
-                        { name: row.golfer_2, score: row.score_2 },
-                        { name: row.golfer_3, score: row.score_3 },
-                        { name: row.golfer_4, score: row.score_4 },
-                      ].map((g, i) => (
-                        <span key={i} style={{ marginRight: 6 }}>
-                          {g.name?.split(' ').pop()}<span style={{ color: '#bbb' }}>({formatScore(g.score)})</span>
-                        </span>
-                      ))}
+                      <span style={!poolLocked && row.user_id !== userId ? { filter: 'blur(5px)', userSelect: 'none', display: 'inline-block' } : {}}>
+                        {[
+                          { name: row.golfer_1, score: row.score_1 },
+                          { name: row.golfer_2, score: row.score_2 },
+                          { name: row.golfer_3, score: row.score_3 },
+                          { name: row.golfer_4, score: row.score_4 },
+                        ].map((g, i) => (
+                          <span key={i} style={{ marginRight: 6 }}>
+                            {g.name?.split(' ').pop()}<span style={{ color: '#bbb' }}>({formatScore(g.score)})</span>
+                          </span>
+                        ))}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -310,16 +317,18 @@ export default function HomePage() {
                       {formatScore(row.team_score)}
                     </td>
                     <td className="mobile-hide" style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
-                      {[
-                        { name: row.golfer_1, score: row.score_1 },
-                        { name: row.golfer_2, score: row.score_2 },
-                        { name: row.golfer_3, score: row.score_3 },
-                        { name: row.golfer_4, score: row.score_4 },
-                      ].map((g, i) => (
-                        <span key={i} style={{ marginRight: 6 }}>
-                          {g.name?.split(' ').pop()}<span style={{ color: '#bbb' }}>({formatScore(g.score)})</span>
-                        </span>
-                      ))}
+                      <span style={!poolLocked && row.user_id !== userId ? { filter: 'blur(5px)', userSelect: 'none', display: 'inline-block' } : {}}>
+                        {[
+                          { name: row.golfer_1, score: row.score_1 },
+                          { name: row.golfer_2, score: row.score_2 },
+                          { name: row.golfer_3, score: row.score_3 },
+                          { name: row.golfer_4, score: row.score_4 },
+                        ].map((g, i) => (
+                          <span key={i} style={{ marginRight: 6 }}>
+                            {g.name?.split(' ').pop()}<span style={{ color: '#bbb' }}>({formatScore(g.score)})</span>
+                          </span>
+                        ))}
+                      </span>
                     </td>
                   </tr>
                 ))}
