@@ -28,7 +28,6 @@ export default function HomePage() {
 
   // Join/login form state
   const [mode, setMode] = useState<'join' | 'login'>('join')
-  const [poolLocked, setPoolLocked] = useState(false)
   const [poolPass, setPoolPass] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
