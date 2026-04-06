@@ -312,6 +312,9 @@ export default function PickPage() {
             <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--green)', marginBottom: '0.5rem' }}>💳 Payment Info</div>
             <div style={{ fontSize: '0.82rem', color: 'var(--gray)', marginBottom: '0.65rem' }}>
               Send $20/entry to Kirk, then enter your handle so we can match your payment.
+              <div style={{ marginTop: '0.4rem' }}>
+                <strong>Venmo:</strong> @KirkOliver &nbsp;·&nbsp; <strong>PayPal:</strong> kirko005@gmail.com <span style={{ fontStyle: 'italic' }}>(Friends &amp; Family)</span>
+              </div>
             </div>
             <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 5, overflow: 'hidden', width: 'fit-content', marginBottom: '0.5rem' }}>
               {(['venmo', 'paypal'] as const).map(m => (
