@@ -212,7 +212,16 @@ export default function HomePage() {
                       {formatScore(row.team_score)}
                     </td>
                     <td style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
-                      {[row.golfer_1, row.golfer_2, row.golfer_3, row.golfer_4].map(n => n?.split(' ').pop()).join(', ')}
+                      {[
+                        { name: row.golfer_1, score: row.score_1 },
+                        { name: row.golfer_2, score: row.score_2 },
+                        { name: row.golfer_3, score: row.score_3 },
+                        { name: row.golfer_4, score: row.score_4 },
+                      ].map((g, i) => (
+                        <span key={i} style={{ marginRight: 6 }}>
+                          {g.name?.split(' ').pop()}<span style={{ color: '#bbb' }}>({formatScore(g.score)})</span>
+                        </span>
+                      ))}
                     </td>
                   </tr>
                 ))}
@@ -298,7 +307,16 @@ export default function HomePage() {
                       {formatScore(row.team_score)}
                     </td>
                     <td style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
-                      {[row.golfer_1, row.golfer_2, row.golfer_3, row.golfer_4].map(n => n?.split(' ').pop()).join(', ')}
+                      {[
+                        { name: row.golfer_1, score: row.score_1 },
+                        { name: row.golfer_2, score: row.score_2 },
+                        { name: row.golfer_3, score: row.score_3 },
+                        { name: row.golfer_4, score: row.score_4 },
+                      ].map((g, i) => (
+                        <span key={i} style={{ marginRight: 6 }}>
+                          {g.name?.split(' ').pop()}<span style={{ color: '#bbb' }}>({formatScore(g.score)})</span>
+                        </span>
+                      ))}
                     </td>
                   </tr>
                 ))}
