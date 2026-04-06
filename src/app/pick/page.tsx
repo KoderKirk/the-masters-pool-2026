@@ -301,7 +301,7 @@ export default function PickPage() {
           <ol style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 1.9, fontSize: '0.85rem', margin: 0 }}>
             <li>Pick <strong>4 golfers</strong> · combined points <strong>≤ 50</strong></li>
             <li>Best <strong>3 of 4</strong> scores count — worst dropped</li>
-            <li>Need <strong>≥ 3 to make the cut</strong> or entry is DQ'd</li>
+            <li>Need <strong>≥ 3 active golfers</strong> (made cut or TBD) or DQ'd</li>
             <li>Lowest team score wins · Tiebreaker: had the winner?</li>
             <li>Entries lock <strong>Thursday 5am PT</strong></li>
           </ol>

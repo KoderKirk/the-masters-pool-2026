@@ -20,7 +20,7 @@ export default function RulesPage() {
         <ol style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 2.1, fontSize: '0.95rem' }}>
           <li>Your team score = <strong>best 3 of 4 golfer scores</strong> — the worst score is dropped</li>
           <li>Lowest cumulative team score wins</li>
-          <li>Need <strong>≥ 3 golfers to make the cut</strong> or your entry is <strong>DQ'd</strong></li>
+          <li>Need <strong>≥ 3 active golfers</strong> (made cut or TBD) or your entry is <strong>DQ'd</strong></li>
           <li>Tiebreaker: entry whose team included the tournament winner</li>
         </ol>
       </div>

@@ -64,14 +64,16 @@ scored AS (
     (COALESCE(score_1,0)+COALESCE(score_2,0)+COALESCE(score_3,0)+COALESCE(score_4,0))
     - GREATEST(COALESCE(score_1,999),COALESCE(score_2,999),COALESCE(score_3,999),COALESCE(score_4,999))
     AS team_score,
-    (COALESCE(cut_1::int,0)+COALESCE(cut_2::int,0)+COALESCE(cut_3::int,0)+COALESCE(cut_4::int,0)) AS made_cut_count
+    (CASE WHEN cut_1 = false THEN 1 ELSE 0 END +
+     CASE WHEN cut_2 = false THEN 1 ELSE 0 END +
+     CASE WHEN cut_3 = false THEN 1 ELSE 0 END +
+     CASE WHEN cut_4 = false THEN 1 ELSE 0 END) AS missed_cut_count
   FROM base
 )
 SELECT *,
-  CASE WHEN made_cut_count < 3 AND (cut_1 IS NOT NULL OR cut_2 IS NOT NULL OR cut_3 IS NOT NULL OR cut_4 IS NOT NULL)
-       THEN TRUE ELSE FALSE END AS is_disqualified,
+  CASE WHEN missed_cut_count > 1 THEN TRUE ELSE FALSE END AS is_disqualified,
   RANK() OVER (ORDER BY
-    CASE WHEN made_cut_count < 3 AND (cut_1 IS NOT NULL) THEN 1 ELSE 0 END,
+    CASE WHEN missed_cut_count > 1 THEN 1 ELSE 0 END,
     team_score ASC
   ) AS place
 FROM scored;
