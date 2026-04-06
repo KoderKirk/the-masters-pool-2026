@@ -2,16 +2,25 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
+type Golfer = { id: string; name: string; points: number }
+
 export default function RulesPage() {
   const [authed, setAuthed] = useState<boolean | null>(null)
+  const [golfers, setGolfers] = useState<Golfer[]>([])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setAuthed(!!user))
+    supabase.from('golfers').select('id, name, points').order('points', { ascending: false }).then(({ data }) => {
+      if (data) setGolfers(data)
+    })
   }, [])
+
+  const th: React.CSSProperties = { padding: '0.5rem 0.75rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray)', borderBottom: '2px solid var(--border)' }
+  const td: React.CSSProperties = { padding: '0.45rem 0.75rem', fontSize: '0.9rem', borderBottom: '1px solid var(--border)' }
 
   return (
     <div className="page fade-in" style={{ paddingTop: '2.5rem', maxWidth: 680 }}>
-      <h1 style={{ color: 'var(--green)', marginBottom: '0.25rem' }}>📋 Pool Rules</h1>
+      <h1 style={{ color: 'var(--green)', marginBottom: '0.25rem' }}>📋 Rules & Golfers</h1>
       <p style={{ color: 'var(--gray)', fontSize: '0.88rem', marginBottom: '2rem' }}>Masters Pool 2026 · Augusta National</p>
 
       <div className="card" style={{ marginBottom: '1.25rem' }}>
@@ -59,6 +68,34 @@ export default function RulesPage() {
           <li>Player scores will be updated at the end of each day's rounds</li>
           <li>Email commentary will be emailed out as in previous years</li>
         </ul>
+      </div>
+
+      {/* Golfer roster */}
+      <div className="card" style={{ marginBottom: '1.25rem', padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '1rem 1rem 0.75rem', borderBottom: '2px solid var(--border)' }}>
+          <h2 style={{ fontSize: '1rem', color: 'var(--green)', margin: 0 }}>2026 Player Costs</h2>
+          <p style={{ fontSize: '0.8rem', color: 'var(--gray)', margin: '0.25rem 0 0' }}>{golfers.length} players · combined cost per entry must be ≤ 50</p>
+        </div>
+        <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
+              <tr>
+                <th style={th}>#</th>
+                <th style={th}>Player</th>
+                <th style={{ ...th, textAlign: 'right' }}>Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {golfers.map((g, i) => (
+                <tr key={g.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf8' }}>
+                  <td style={{ ...td, color: 'var(--gray)', width: 36 }}>{i + 1}</td>
+                  <td style={td}>{g.name}</td>
+                  <td style={{ ...td, textAlign: 'right', fontWeight: 700, color: 'var(--green)', paddingRight: '1rem' }}>{g.points}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Sign up CTA — only when logged out */}

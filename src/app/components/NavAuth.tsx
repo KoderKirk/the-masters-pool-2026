@@ -29,7 +29,7 @@ export default function NavAuth() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
       <a href="/history" style={linkStyle}>League History</a>
-      <a href="/rules" style={linkStyle}>Rules</a>
+      <a href="/rules" style={linkStyle}>Rules &amp; Golfers</a>
       {authed && <a href="/" style={linkStyle}>Dashboard</a>}
       {authed && <a href="/leaderboard" style={linkStyle}>Leaderboard</a>}
       {authed && <a href="/pick" style={linkStyle}>My Picks</a>}
