@@ -10,6 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet" />
@@ -90,6 +91,70 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .fade-in { animation: fadeIn 0.35s ease both; }
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
           .pulse { animation: pulse 2s infinite; }
+
+          /* Nav mobile */
+          .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+          .nav-hamburger { display: none; background: transparent; border: none; cursor: pointer; padding: 4px 6px; color: #fff; font-size: 1.5rem; line-height: 1; }
+          .nav-mobile-closed { display: none; }
+          .nav-mobile-open { display: none; }
+
+          /* Responsive helpers */
+          .mobile-1col {}
+          .mobile-2col {}
+          .mobile-scroll {}
+          .mobile-hide {}
+          .mobile-stack {}
+          .mobile-full {}
+
+          @media (max-width: 640px) {
+            .page { padding: 0 0.75rem 3rem; }
+            .card { padding: 1rem; }
+
+            /* Nav */
+            .nav-links { display: none !important; }
+            .nav-hamburger { display: block !important; }
+            .nav-mobile-open {
+              display: flex !important;
+              flex-direction: column;
+              position: fixed;
+              top: 59px; left: 0; right: 0;
+              background: var(--green);
+              border-top: 2px solid var(--gold);
+              padding: 0.5rem 1.25rem 1rem;
+              z-index: 999;
+              box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            }
+            .nav-mobile-open a {
+              display: block !important;
+              color: #fff !important;
+              font-size: 1rem !important;
+              opacity: 1 !important;
+              padding: 0.8rem 0;
+              border-bottom: 1px solid rgba(255,255,255,0.12);
+              text-decoration: none !important;
+            }
+            .nav-mobile-open .nav-signout {
+              display: block !important;
+              width: 100%;
+              text-align: left;
+              background: transparent;
+              border: none;
+              border-bottom: 1px solid rgba(255,255,255,0.12);
+              color: #fff;
+              font-size: 1rem;
+              padding: 0.8rem 0;
+              cursor: pointer;
+              font-family: 'Source Sans 3', sans-serif;
+            }
+
+            /* Layout helpers */
+            .mobile-1col { grid-template-columns: 1fr !important; }
+            .mobile-2col { grid-template-columns: 1fr 1fr !important; }
+            .mobile-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+            .mobile-hide { display: none !important; }
+            .mobile-stack { flex-direction: column !important; align-items: stretch !important; }
+            .mobile-full { width: 100% !important; max-width: 100% !important; }
+          }
         `}</style>
       </head>
       <body>
@@ -97,6 +162,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           background: 'var(--green)',
           borderBottom: '3px solid var(--gold)',
           padding: '0 1.25rem',
+          position: 'relative',
         }}>
           <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
             <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>

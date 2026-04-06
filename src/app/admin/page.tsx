@@ -165,7 +165,7 @@ export default function AdminPage() {
       <p style={{ color: 'var(--gray)', fontSize: '0.88rem', marginBottom: '1.75rem' }}>Masters Pool 2026 · Kirk only</p>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.75rem' }}>
+      <div className="mobile-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.75rem' }}>
         {[
           { icon: '📋', label: 'Entries', val: entries.length },
           { icon: '👤', label: 'Players', val: profiles.length },
@@ -181,7 +181,7 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs + action buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid var(--green)', marginBottom: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid var(--green)', marginBottom: 0, flexWrap: 'wrap', gap: '0.25rem' }}>
         {(['entries', 'payments', 'scores'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '0.55rem 1.1rem', border: 'none', cursor: 'pointer',
@@ -208,7 +208,7 @@ export default function AdminPage() {
 
       {msg && <p className={msg.startsWith('⚠') ? 'error' : 'success'} style={{ padding: '0.5rem 0' }}>{msg.startsWith('⚠') ? msg : `✓ ${msg}`}</p>}
 
-      <div style={{ background: 'var(--white)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+      <div className="mobile-scroll" style={{ background: 'var(--white)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
 
         {/* Entries tab */}
         {tab === 'entries' && (
@@ -291,7 +291,7 @@ export default function AdminPage() {
                 📥 Export Scores
               </button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem', maxHeight: 480, overflowY: 'auto' }}>
+            <div className="mobile-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem', maxHeight: 480, overflowY: 'auto' }}>
               {[...golfers].sort((a, b) => a.name.split(' ').pop()!.localeCompare(b.name.split(' ').pop()!)).map(g => (
                 <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'var(--cream)', borderRadius: 5, border: '1px solid var(--border)' }}>
                   <span style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600 }}>{g.name.split(' ').pop()}</span>

@@ -295,7 +295,7 @@ export default function PickPage() {
       )}
 
       {/* Quick Rules + Payment Info — side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: paymentStatus !== 'paid' ? '1fr 1fr' : '1fr', gap: '1rem', marginBottom: '1.75rem' }}>
+      <div className="mobile-1col" style={{ display: 'grid', gridTemplateColumns: paymentStatus !== 'paid' ? '1fr 1fr' : '1fr', gap: '1rem', marginBottom: '1.75rem' }}>
         <div className="card" style={{ padding: '1rem 1.25rem' }}>
           <h3 style={{ color: 'var(--green)', marginBottom: '0.6rem', fontSize: '0.95rem' }}>📋 Quick Rules</h3>
           <ol style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 1.9, fontSize: '0.85rem', margin: 0 }}>
@@ -354,7 +354,7 @@ export default function PickPage() {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
+      <div className="mobile-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
 
         {/* Golfer list */}
         <div>

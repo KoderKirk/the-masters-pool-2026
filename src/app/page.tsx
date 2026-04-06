@@ -138,13 +138,13 @@ export default function HomePage() {
               <div style={{ color: 'var(--gold)', fontFamily: 'Playfair Display, serif', fontSize: '2.4rem', fontWeight: 700, lineHeight: 1 }}>${purse.toLocaleString()}</div>
               <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem', marginTop: 4 }}>{totalEntries} entries × $20</div>
             </div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               {[
                 { place: '1st', placeNum: 1, pct: '65%', amt: first, color: 'var(--gold)' },
                 { place: '2nd', placeNum: 2, pct: '25%', amt: second, color: '#C0C0C0' },
                 { place: '3rd', placeNum: 3, pct: '10%', amt: third, color: '#CD7F32' },
               ].map(p => (
-                <div key={p.place} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.75rem 1.1rem', minWidth: 110 }}>
+                <div key={p.place} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.75rem 1rem', minWidth: 90, flex: '1 1 90px' }}>
                   <div style={{ color: p.color, fontWeight: 700, fontSize: '1.1rem', fontFamily: 'Playfair Display, serif' }}>{p.place}</div>
                   {showLeader && (
                     <div style={{ color: '#fff', fontSize: '0.78rem', fontWeight: 600, marginBottom: 3, opacity: 0.9 }}>
@@ -185,13 +185,14 @@ export default function HomePage() {
               <span style={{ fontSize: '1rem' }}>★</span>
               <h3 style={{ fontSize: '0.9rem', color: '#fff', margin: 0 }}>Favorite Entries</h3>
             </div>
+            <div className="mobile-scroll">
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.87rem' }}>
               <thead>
                 <tr style={{ background: 'var(--cream)' }}>
                   <th style={th}>Pos</th>
                   <th style={{ ...th, textAlign: 'left' }}>Entry</th>
                   <th style={th}>Score</th>
-                  <th style={{ ...th, textAlign: 'left', fontSize: '0.75rem' }}>Team</th>
+                  <th className="mobile-hide" style={{ ...th, textAlign: 'left', fontSize: '0.75rem' }}>Team</th>
                 </tr>
               </thead>
               <tbody>
@@ -211,7 +212,7 @@ export default function HomePage() {
                     <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: (row.team_score ?? 0) < 0 ? 'var(--red)' : (row.team_score ?? 0) === 0 ? 'var(--dark)' : '#3a6ea5' }}>
                       {formatScore(row.team_score)}
                     </td>
-                    <td style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
+                    <td className="mobile-hide" style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
                       {[
                         { name: row.golfer_1, score: row.score_1 },
                         { name: row.golfer_2, score: row.score_2 },
@@ -227,11 +228,12 @@ export default function HomePage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
         {/* Two-column: Golfers + Leaderboard */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '1.25rem', alignItems: 'start' }}>
+        <div className="mobile-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '1.25rem', alignItems: 'start' }}>
 
           {/* Golfer Scoreboard */}
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -276,13 +278,14 @@ export default function HomePage() {
             <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--cream-dark)' }}>
               <h3 style={{ fontSize: '0.9rem', color: 'var(--green)', margin: 0 }}>🏆 Top 25 Entries</h3>
             </div>
+            <div className="mobile-scroll">
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.87rem' }}>
               <thead>
                 <tr style={{ background: 'var(--cream)' }}>
                   <th style={th}>Pos</th>
                   <th style={{ ...th, textAlign: 'left' }}>Entry</th>
                   <th style={th}>Score</th>
-                  <th style={{ ...th, textAlign: 'left', fontSize: '0.75rem' }}>Team</th>
+                  <th className="mobile-hide" style={{ ...th, textAlign: 'left', fontSize: '0.75rem' }}>Team</th>
                 </tr>
               </thead>
               <tbody>
@@ -306,7 +309,7 @@ export default function HomePage() {
                     <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: (row.team_score ?? 0) < 0 ? 'var(--red)' : (row.team_score ?? 0) === 0 ? 'var(--dark)' : '#3a6ea5' }}>
                       {formatScore(row.team_score)}
                     </td>
-                    <td style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
+                    <td className="mobile-hide" style={{ ...td, fontSize: '0.75rem', color: 'var(--gray)' }}>
                       {[
                         { name: row.golfer_1, score: row.score_1 },
                         { name: row.golfer_2, score: row.score_2 },
@@ -325,6 +328,7 @@ export default function HomePage() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>

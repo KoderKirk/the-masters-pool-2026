@@ -106,6 +106,7 @@ export default function LeaderboardPage() {
             <span style={{ fontSize: '1rem' }}>★</span>
             <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Favorites</span>
           </div>
+          <div className="mobile-scroll">
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
             <tbody>
               {rows.filter(r => favorites.includes(r.entry_id)).map((row, i) => {
@@ -143,7 +144,7 @@ export default function LeaderboardPage() {
                     {isExp && (
                       <tr key={`fav-${row.entry_id}-exp`}>
                         <td colSpan={6} style={{ padding: '1rem 1.25rem', background: '#fffbec', borderBottom: '1px solid var(--border)' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                          <div className="mobile-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
                             {golfers.map((g, idx) => (
                               <div key={idx} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0.75rem', textAlign: 'center' }}>
                                 <div style={{ fontSize: '0.85rem', marginBottom: 4, fontWeight: 600 }}>{g.name}</div>
@@ -160,17 +161,19 @@ export default function LeaderboardPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       <div style={{ background: 'var(--white)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+        <div className="mobile-scroll">
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
           <thead>
             <tr style={{ background: 'var(--green)', color: '#fff' }}>
               <th style={{ ...th, textAlign: 'center', width: 52 }}>Pos</th>
               <th style={th}>Entry</th>
               <th style={{ ...th, textAlign: 'center', width: 36 }}></th>
-              <th style={{ ...th, textAlign: 'center' }}>Budget</th>
+              <th className="mobile-hide" style={{ ...th, textAlign: 'center' }}>Budget</th>
               <th style={{ ...th, textAlign: 'center' }}>Score</th>
               <th style={{ ...th, fontSize: '0.78rem' }}>Team</th>
             </tr>
@@ -221,9 +224,9 @@ export default function LeaderboardPage() {
                         {favorites.includes(row.entry_id) ? '★' : '☆'}
                       </button>
                     </td>
-                    <td style={{ ...td, textAlign: 'center', color: 'var(--gray)', fontSize: '0.82rem' }}>{row.total_points_used}pt</td>
+                    <td className="mobile-hide" style={{ ...td, textAlign: 'center', color: 'var(--gray)', fontSize: '0.82rem' }}>{row.total_points_used}pt</td>
                     <td style={{ ...td, textAlign: 'center', fontWeight: 700, color: scoreColor }}>{formatScore(row.team_score)}</td>
-                    <td style={{ ...td, fontSize: '0.8rem', color: 'var(--gray)' }}>
+                    <td className="mobile-hide" style={{ ...td, fontSize: '0.8rem', color: 'var(--gray)' }}>
                       {golfers.map((g, idx) => (
                         <span key={idx} style={{ marginRight: 8 }}>
                           {g.name?.split(' ').pop()}
@@ -235,7 +238,7 @@ export default function LeaderboardPage() {
                   {isExp && (
                     <tr key={`${row.entry_id}-exp`}>
                       <td colSpan={6} style={{ padding: '1rem 1.25rem', background: '#f4fbf7', borderBottom: '1px solid var(--border)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                        <div className="mobile-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
                           {golfers.map((g, idx) => (
                             <div key={idx} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0.75rem', textAlign: 'center' }}>
                               <div style={{ fontSize: '0.85rem', marginBottom: 4, fontWeight: 600 }}>{g.name}</div>
@@ -261,6 +264,7 @@ export default function LeaderboardPage() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )
