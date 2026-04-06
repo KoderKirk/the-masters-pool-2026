@@ -297,7 +297,7 @@ export default function HomePage() {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((row, i) => (
+                {leaderboard.slice(0, 25).map((row, i) => (
                   <tr key={row.entry_id} style={{ background: row.is_disqualified ? '#fff8f8' : i % 2 === 0 ? '#fff' : '#fafaf8' }}>
                     <td style={{ ...td, textAlign: 'center' }}>
                       <span style={{
