@@ -32,15 +32,13 @@ export default function LeaderboardPage() {
     })
   }, [])
 
-  function toggleFavorite(e: React.MouseEvent, id: string) {
+  async function toggleFavorite(e: React.MouseEvent, id: string) {
     e.stopPropagation()
-    setFavorites(prev => {
-      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
-      if (currentUserId) {
-        supabase.from('profiles').update({ favorites: JSON.stringify(next) }).eq('id', currentUserId)
-      }
-      return next
-    })
+    const next = favorites.includes(id) ? favorites.filter(f => f !== id) : [...favorites, id]
+    setFavorites(next)
+    if (currentUserId) {
+      await supabase.from('profiles').update({ favorites: JSON.stringify(next) }).eq('id', currentUserId)
+    }
   }
 
   async function loadData() {
