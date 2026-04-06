@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return NextResponse.json({ error: 'Missing SUPABASE_URL' }, { status: 500 })
+    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return NextResponse.json({ error: 'Missing SUPABASE_ANON_KEY' }, { status: 500 })
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ error: 'Missing SERVICE_ROLE_KEY — restart dev server' }, { status: 500 })
+
     const authHeader = req.headers.get('authorization') ?? ''
     const token = authHeader.replace('Bearer ', '')
     if (!token || token === 'undefined') {
@@ -10,8 +14,8 @@ export async function POST(req: NextRequest) {
     }
 
     const anonClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
     const { data: { user: caller } } = await anonClient.auth.getUser()
@@ -26,8 +30,8 @@ export async function POST(req: NextRequest) {
     }
 
     const adminClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
     const { error } = await adminClient.from('profiles').update({ payment_status }).eq('id', user_id)
