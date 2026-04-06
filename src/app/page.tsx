@@ -245,7 +245,7 @@ export default function HomePage() {
                     <th style={th}>Pos</th>
                     <th style={{ ...th, textAlign: 'left' }}>Player</th>
                     <th style={th}>Score</th>
-                    <th style={th}>Cut</th>
+                    <th style={th}>Make Cut</th>
                   </tr>
                 </thead>
                 <tbody>
