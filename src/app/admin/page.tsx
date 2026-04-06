@@ -89,6 +89,27 @@ export default function AdminPage() {
     setMsg('All entries unlocked.')
   }
 
+  function exportScores() {
+    const sorted = [...golfers].sort((a, b) => a.name.split(' ').pop()!.localeCompare(b.name.split(' ').pop()!))
+    const rows = [
+      ['Player', 'Cost', 'Score', 'Cut Status'],
+      ...sorted.map(g => [
+        g.name,
+        g.points,
+        scores[g.id] ?? '0',
+        cut[g.id] === 'yes' ? 'Made Cut' : cut[g.id] === 'no' ? 'Missed Cut' : 'TBD',
+      ]),
+    ]
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `masters-scores-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function exportUsers() {
     const golferMap = Object.fromEntries(golfers.map(g => [g.id, g.name]))
     const rows = [
@@ -262,11 +283,16 @@ export default function AdminPage() {
         {/* Scores tab */}
         {tab === 'scores' && (
           <div style={{ padding: '1.25rem' }}>
-            <p style={{ color: 'var(--gray)', fontSize: '0.88rem', marginBottom: '1rem' }}>
-              Enter scores vs par (e.g. -5 for 5 under). Set cut status after Friday's round.
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <p style={{ color: 'var(--gray)', fontSize: '0.88rem', margin: 0 }}>
+                Enter scores vs par (e.g. -5 for 5 under). Set cut status after Friday's round.
+              </p>
+              <button className="btn btn-ghost" onClick={exportScores} style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem', whiteSpace: 'nowrap', marginLeft: '1rem' }}>
+                📥 Export Scores
+              </button>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem', maxHeight: 480, overflowY: 'auto' }}>
-              {golfers.map(g => (
+              {[...golfers].sort((a, b) => a.name.split(' ').pop()!.localeCompare(b.name.split(' ').pop()!)).map(g => (
                 <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'var(--cream)', borderRadius: 5, border: '1px solid var(--border)' }}>
                   <span style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600 }}>{g.name.split(' ').pop()}</span>
                   <span style={{ fontSize: '0.72rem', color: 'var(--gray)' }}>{g.points}pt</span>
