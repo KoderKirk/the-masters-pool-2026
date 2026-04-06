@@ -22,16 +22,23 @@ export default function LeaderboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('masters_favorites')
-    if (stored) setFavorites(JSON.parse(stored))
-    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id ?? null))
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setCurrentUserId(user.id)
+      const { data } = await supabase.from('profiles').select('favorites').eq('id', user.id).single()
+      if (data?.favorites) {
+        try { setFavorites(JSON.parse(data.favorites)) } catch {}
+      }
+    })
   }, [])
 
   function toggleFavorite(e: React.MouseEvent, id: string) {
     e.stopPropagation()
     setFavorites(prev => {
       const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
-      localStorage.setItem('masters_favorites', JSON.stringify(next))
+      if (currentUserId) {
+        supabase.from('profiles').update({ favorites: JSON.stringify(next) }).eq('id', currentUserId)
+      }
       return next
     })
   }

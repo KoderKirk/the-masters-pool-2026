@@ -44,21 +44,23 @@ export default function HomePage() {
         setAuthed(true)
         setUserId(user.id)
         const [{ data: profile }, { data: gs }, { data: lb }, { count }, { data: settings }, { data: locked }] = await Promise.all([
-          supabase.from('profiles').select('display_name,payment_status').eq('id', user.id).single(),
+          supabase.from('profiles').select('display_name,payment_status,favorites').eq('id', user.id).single(),
           supabase.from('golfers').select('name,current_score,position,made_cut').order('current_score', { ascending: true }),
           supabase.from('entry_leaderboard').select('*').order('place'),
           supabase.from('entries').select('*', { count: 'exact', head: true }),
           supabase.from('pool_settings').select('value').eq('key', 'show_leader').single(),
           supabase.from('entries').select('id').eq('is_locked', true).limit(1),
         ])
-        if (profile) { setDisplayName(profile.display_name); setPaymentStatus(profile.payment_status ?? 'pending') }
+        if (profile) {
+          setDisplayName(profile.display_name)
+          setPaymentStatus(profile.payment_status ?? 'pending')
+          if (profile.favorites) { try { setFavorites(JSON.parse(profile.favorites)) } catch {} }
+        }
         if (gs) setGolfers(gs)
         if (lb) setLeaderboard(lb)
         if (count) setTotalEntries(count)
         if (settings) setShowLeader(!!settings.value)
         if (locked && locked.length > 0) setPoolLocked(true)
-        const stored = localStorage.getItem('masters_favorites')
-        if (stored) setFavorites(JSON.parse(stored))
       } else {
         setAuthed(false)
         const { data: locked } = await supabase.from('entries').select('id').eq('is_locked', true).limit(1)
