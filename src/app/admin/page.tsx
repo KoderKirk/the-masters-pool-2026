@@ -51,15 +51,9 @@ export default function AdminPage() {
   }, [router])
 
   async function updatePayment(id: string, status: 'paid' | 'pending') {
-    const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch('/api/admin/update-payment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-      body: JSON.stringify({ user_id: id, payment_status: status }),
-    })
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}))
-      setMsg(`⚠ Failed to update payment: ${json.error ?? res.status}`)
+    const { error } = await supabase.from('profiles').update({ payment_status: status }).eq('id', id)
+    if (error) {
+      setMsg(`⚠ Failed to update payment: ${error.message}`)
       return
     }
     setProfiles(prev => prev.map(p => p.id === id ? { ...p, payment_status: status } : p))
