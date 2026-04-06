@@ -92,18 +92,22 @@ export default function AdminPage() {
   function exportUsers() {
     const golferMap = Object.fromEntries(golfers.map(g => [g.id, g.name]))
     const rows = [
-      ['Entry Name', 'Player Name', 'Email', 'Golfer 1', 'Golfer 2', 'Golfer 3', 'Golfer 4', 'Payment Status', 'Payment Method', 'Payment Handle', 'Amount Owed'],
+      ['Entry Name', 'Player Name', 'Email', 'Golfer 1', 'G1 Pts', 'Golfer 2', 'G2 Pts', 'Golfer 3', 'G3 Pts', 'Golfer 4', 'G4 Pts', 'Payment Status', 'Payment Method', 'Payment Handle', 'Amount Owed'],
       ...entries.map(e => {
         const p = profiles.find(pr => pr.id === e.user_id)
         const userEntryCount = entries.filter(en => en.user_id === e.user_id).length
+        const g1 = golfers.find(g => g.id === e.golfer_1_id)
+        const g2 = golfers.find(g => g.id === e.golfer_2_id)
+        const g3 = golfers.find(g => g.id === e.golfer_3_id)
+        const g4 = golfers.find(g => g.id === e.golfer_4_id)
         return [
           e.entry_name,
           p?.display_name ?? '',
           p?.email ?? '',
-          golferMap[e.golfer_1_id] ?? '',
-          golferMap[e.golfer_2_id] ?? '',
-          golferMap[e.golfer_3_id] ?? '',
-          golferMap[e.golfer_4_id] ?? '',
+          g1?.name ?? '', g1?.points ?? '',
+          g2?.name ?? '', g2?.points ?? '',
+          g3?.name ?? '', g3?.points ?? '',
+          g4?.name ?? '', g4?.points ?? '',
           p?.payment_status ?? '',
           p?.payment_method ?? '',
           p?.payment_handle ?? '',
