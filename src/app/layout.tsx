@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import NavAuth from './components/NavAuth'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata: Metadata = {
   title: 'Masters Pool 2026',
@@ -175,6 +176,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </nav>
         <main>{children}</main>
+        <SpeedInsights />
         <footer style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray)', fontSize: '0.82rem', borderTop: '1px solid var(--border)', marginTop: '2rem' }}>
           Masters Pool 2026 · $20/entry · Max 3 entries
         </footer>
