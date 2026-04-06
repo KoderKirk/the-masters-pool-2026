@@ -168,7 +168,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
               <span style={{ fontSize: '1.4rem' }}>⛳</span>
               <span style={{ fontFamily: 'Playfair Display, serif', color: 'var(--gold)', fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.04em' }}>
-                MASTERS POOL 2026
+                CC MASTERS POOL 2026
               </span>
             </a>
             <NavAuth />
