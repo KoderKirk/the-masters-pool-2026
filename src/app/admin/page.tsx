@@ -90,11 +90,25 @@ export default function AdminPage() {
   }
 
   function exportUsers() {
+    const golferMap = Object.fromEntries(golfers.map(g => [g.id, g.name]))
     const rows = [
-      ['Name', 'Email', 'Payment Status', 'Entries', 'Amount Owed'],
-      ...profiles.map(p => {
-        const n = entries.filter(e => e.user_id === p.id).length
-        return [p.display_name, p.email ?? '', p.payment_status, n, `$${n * 20}`]
+      ['Entry Name', 'Player Name', 'Email', 'Golfer 1', 'Golfer 2', 'Golfer 3', 'Golfer 4', 'Payment Status', 'Payment Method', 'Payment Handle', 'Amount Owed'],
+      ...entries.map(e => {
+        const p = profiles.find(pr => pr.id === e.user_id)
+        const userEntryCount = entries.filter(en => en.user_id === e.user_id).length
+        return [
+          e.entry_name,
+          p?.display_name ?? '',
+          p?.email ?? '',
+          golferMap[e.golfer_1_id] ?? '',
+          golferMap[e.golfer_2_id] ?? '',
+          golferMap[e.golfer_3_id] ?? '',
+          golferMap[e.golfer_4_id] ?? '',
+          p?.payment_status ?? '',
+          p?.payment_method ?? '',
+          p?.payment_handle ?? '',
+          `$${userEntryCount * 20}`,
+        ]
       }),
     ]
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -102,7 +116,7 @@ export default function AdminPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `masters-pool-users-${new Date().toISOString().slice(0, 10)}.csv`
+    a.download = `masters-pool-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
