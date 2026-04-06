@@ -1,6 +1,14 @@
 'use client'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabase'
 
 export default function HistoryPage() {
+  const [authed, setAuthed] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setAuthed(!!user))
+  }, [])
+
   return (
     <div className="page fade-in" style={{ paddingTop: '2.5rem', maxWidth: 720 }}>
 
@@ -19,7 +27,7 @@ export default function HistoryPage() {
           backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)',
           backgroundSize: '12px 12px',
         }} />
-        <p style={{ color: 'var(--gold)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: '0.6rem' }}>Est. in memory of</p>
+        <p style={{ color: 'var(--gold)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: '0.6rem' }}>In memory of</p>
         <h1 style={{
           fontFamily: 'Playfair Display, serif',
           fontSize: 'clamp(1.6rem, 5vw, 2.4rem)',
@@ -84,6 +92,15 @@ export default function HistoryPage() {
           For Cary. For the tradition. And for the love of the game.
         </p>
       </div>
+
+      {/* Sign up CTA — only when logged out */}
+      {authed === false && (
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <a href="/" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.75rem 2rem', display: 'inline-block' }}>
+            Join the Pool
+          </a>
+        </div>
+      )}
 
     </div>
   )

@@ -1,6 +1,14 @@
 'use client'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabase'
 
 export default function RulesPage() {
+  const [authed, setAuthed] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setAuthed(!!user))
+  }, [])
+
   return (
     <div className="page fade-in" style={{ paddingTop: '2.5rem', maxWidth: 680 }}>
       <h1 style={{ color: 'var(--green)', marginBottom: '0.25rem' }}>📋 Pool Rules</h1>
@@ -44,7 +52,7 @@ export default function RulesPage() {
         </ul>
       </div>
 
-      <div className="card">
+      <div className="card" style={{ marginBottom: '1.25rem' }}>
         <h2 style={{ fontSize: '1rem', color: 'var(--green)', marginBottom: '0.85rem' }}>Updates</h2>
         <ul style={{ paddingLeft: '1.1rem', color: 'var(--gray)', lineHeight: 2.1, fontSize: '0.95rem' }}>
           <li>Check this site throughout the weekend</li>
@@ -52,6 +60,15 @@ export default function RulesPage() {
           <li>Email commentary will be emailed out as in previous years</li>
         </ul>
       </div>
+
+      {/* Sign up CTA — only when logged out */}
+      {authed === false && (
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <a href="/" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.75rem 2rem', display: 'inline-block' }}>
+            Join the Pool
+          </a>
+        </div>
+      )}
     </div>
   )
 }
