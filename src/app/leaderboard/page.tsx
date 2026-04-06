@@ -155,15 +155,21 @@ export default function LeaderboardPage() {
                     {isExp && (
                       <tr key={`fav-${row.entry_id}-exp`}>
                         <td colSpan={6} style={{ padding: '1rem 1.25rem', background: '#fffbec', borderBottom: '1px solid var(--border)' }}>
-                          <div className="mobile-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-                            {golfers.map((g, idx) => (
-                              <div key={idx} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '0.85rem', marginBottom: 4, fontWeight: 600 }}>{g.name}</div>
-                                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: (g.score ?? 0) < 0 ? 'var(--red)' : 'var(--dark)' }}>{formatScore(g.score)}</div>
-                                {g.cut !== null && <div style={{ fontSize: '0.72rem', marginTop: 3, color: g.cut ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>{g.cut ? '✓ Made cut' : '✗ Missed cut'}</div>}
-                              </div>
-                            ))}
-                          </div>
+                          {!poolLocked && row.user_id !== currentUserId ? (
+                            <div style={{ textAlign: 'center', color: 'var(--gray)', fontSize: '0.88rem', padding: '0.5rem 0' }}>
+                              🔒 Team picks are hidden until entries are locked.
+                            </div>
+                          ) : (
+                            <div className="mobile-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                              {golfers.map((g, idx) => (
+                                <div key={idx} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0.75rem', textAlign: 'center' }}>
+                                  <div style={{ fontSize: '0.85rem', marginBottom: 4, fontWeight: 600 }}>{g.name}</div>
+                                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: (g.score ?? 0) < 0 ? 'var(--red)' : 'var(--dark)' }}>{formatScore(g.score)}</div>
+                                  {g.cut !== null && <div style={{ fontSize: '0.72rem', marginTop: 3, color: g.cut ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>{g.cut ? '✓ Made cut' : '✗ Missed cut'}</div>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     )}
@@ -251,24 +257,32 @@ export default function LeaderboardPage() {
                   {isExp && (
                     <tr key={`${row.entry_id}-exp`}>
                       <td colSpan={6} style={{ padding: '1rem 1.25rem', background: '#f4fbf7', borderBottom: '1px solid var(--border)' }}>
-                        <div className="mobile-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-                          {golfers.map((g, idx) => (
-                            <div key={idx} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0.75rem', textAlign: 'center' }}>
-                              <div style={{ fontSize: '0.85rem', marginBottom: 4, fontWeight: 600 }}>{g.name}</div>
-                              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: (g.score ?? 0) < 0 ? 'var(--red)' : 'var(--dark)' }}>
-                                {formatScore(g.score)}
-                              </div>
-                              {g.cut !== null && (
-                                <div style={{ fontSize: '0.72rem', marginTop: 3, color: g.cut ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
-                                  {g.cut ? '✓ Made cut' : '✗ Missed cut'}
+                        {!poolLocked && row.user_id !== currentUserId ? (
+                          <div style={{ textAlign: 'center', color: 'var(--gray)', fontSize: '0.88rem', padding: '0.5rem 0' }}>
+                            🔒 Team picks are hidden until entries are locked.
+                          </div>
+                        ) : (
+                          <>
+                            <div className="mobile-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                              {golfers.map((g, idx) => (
+                                <div key={idx} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 6, padding: '0.75rem', textAlign: 'center' }}>
+                                  <div style={{ fontSize: '0.85rem', marginBottom: 4, fontWeight: 600 }}>{g.name}</div>
+                                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: (g.score ?? 0) < 0 ? 'var(--red)' : 'var(--dark)' }}>
+                                    {formatScore(g.score)}
+                                  </div>
+                                  {g.cut !== null && (
+                                    <div style={{ fontSize: '0.72rem', marginTop: 3, color: g.cut ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
+                                      {g.cut ? '✓ Made cut' : '✗ Missed cut'}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                        <div style={{ marginTop: '0.6rem', fontSize: '0.78rem', color: 'var(--gray)' }}>
-                          Best 3 of 4 scores count · Points budget: {row.total_points_used}/50
-                        </div>
+                            <div style={{ marginTop: '0.6rem', fontSize: '0.78rem', color: 'var(--gray)' }}>
+                              Best 3 of 4 scores count · Points budget: {row.total_points_used}/50
+                            </div>
+                          </>
+                        )}
                       </td>
                     </tr>
                   )}
