@@ -110,7 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </nav>
         <main>{children}</main>
         <footer style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray)', fontSize: '0.82rem', borderTop: '1px solid var(--border)', marginTop: '2rem' }}>
-          Masters Pool 2026 · $20/entry · Max 3 entries · Venmo @KirkOliver
+          Masters Pool 2026 · $20/entry · Max 3 entries
         </footer>
       </body>
     </html>
